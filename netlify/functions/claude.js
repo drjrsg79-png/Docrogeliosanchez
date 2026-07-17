@@ -24,4 +24,4 @@ exports.handler = async (event) => {
     if(!res.ok) return {statusCode:res.status,headers:H,body:JSON.stringify({error:data?.error?.message||"Error de API"})};
     return {statusCode:200,headers:H,body:JSON.stringify(data)};
   }catch(err){return {statusCode:500,headers:H,body:JSON.stringify({error:"Error interno"})};}
-};
+};// v1784282993
