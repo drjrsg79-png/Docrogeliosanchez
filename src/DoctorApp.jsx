@@ -62,9 +62,6 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   const [blockedDates, setBlockedDates] = useState([]);
   const [newBlock, setNewBlock] = useState({date:"",reason:""});
   const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
-  const [appointments, setAppointments] = useState([]);
-  const [availability, setAvailability] = useState([]);
-  const [blockedDates, setBlockedDates] = useState([]);
   const [newBlock, setNewBlock] = useState({date:"",reason:""});
   const [apptLoad, setApptLoad] = useState(false);
   const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
@@ -538,8 +535,14 @@ export default function DoctorApp({ doctorCode, onLogout }) {
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
                 {["Dom","Lun","Mar","Mie","Jue","Vie","Sab"].map((d,i)=>{
                   const active=availability.find(a=>a.day_of_week===i&&a.active);
-                  return <button key={i} onClick={async()=>{const ex=availability.find(a=>a.day_of_week===i);const ns=ex?availability.map(a=>a.day_of_week===i?{...a,active:!a.active}:a):[...availability,{day_of_week:i,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];setAvailability(ns);await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns});});}} style={{background:active?C.emerald:"rgba(255,255,255,0.08)",color:active?"#FFF":C.muted,border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:13}}>{d}</button>;
-                })}
+                    const isActive = availability.find(a=>a.day_of_week===i&&a.active);
+                    return <button key={i} onClick={async()=>{
+                      const ex=availability.find(a=>a.day_of_week===i);
+                      const ns=ex?availability.map(a=>a.day_of_week===i?{...a,active:!a.active}:a):[...availability,{day_of_week:i,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];
+                      setAvailability(ns);
+                      await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns})});
+                    }} style={{background:isActive?C.emerald:"rgba(255,255,255,0.08)",color:isActive?"#FFF":C.muted,border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:13}}>{d}</button>;
+                  })}
               </div>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:C.text,marginBottom:10}}>Bloquear fecha</div>
               <input type="date" value={newBlock.date} onChange={e=>setNewBlock(b=>({...b,date:e.target.value}))} style={{background:"rgba(255,255,255,0.07)",border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",color:C.text,fontSize:14,width:"100%",outline:"none",marginBottom:8}}/>
