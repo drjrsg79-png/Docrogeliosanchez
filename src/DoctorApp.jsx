@@ -530,6 +530,20 @@ export default function DoctorApp({ doctorCode, onLogout }) {
             <DCard>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.text,marginBottom:12}}>Dias disponibles</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+              {availability.filter(a=>a.active).length>0&&(
+                <div style={{background:"rgba(255,255,255,0.05)",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+                  <div style={{color:C.muted,fontSize:12,marginBottom:10}}>Horario por dia (citas cada 40 min) — se guarda al cambiar:</div>
+                  {availability.filter(a=>a.active).map(av=>(
+                    <div key={av.day_of_week} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+                      <div style={{color:C.text,fontWeight:700,fontSize:13,minWidth:36}}>{["Dom","Lun","Mar","Mie","Jue","Vie","Sab"][av.day_of_week]}</div>
+                      <span style={{color:C.muted,fontSize:12}}>de</span>
+                      <input type="time" value={av.start_time||"09:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,start_time:e.target.value}:a))} onBlur={async()=>{await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
+                      <span style={{color:C.muted,fontSize:12}}>a</span>
+                      <input type="time" value={av.end_time||"17:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,end_time:e.target.value}:a))} onBlur={async()=>{await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
+                    </div>
+                  ))}
+                </div>
+              )}
                 {["Dom","Lun","Mar","Mie","Jue","Vie","Sab"].map((d,i)=>{
                   const active=availability.find(a=>a.day_of_week===i&&a.active);
                     const isActive = availability.find(a=>a.day_of_week===i&&a.active);
