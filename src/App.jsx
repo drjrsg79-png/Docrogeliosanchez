@@ -34,7 +34,7 @@ function AppointmentForm({ onBack }) {
       <div style={{color:"#8C857C",fontSize:15,lineHeight:1.7,marginBottom:8}}>El Dr. Rogelio te contactara al:</div>
       <div style={{fontWeight:700,fontSize:17,color:"#152E44",marginBottom:24}}>{form.phone}</div>
       <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:14,padding:"14px 18px",marginBottom:24,fontSize:13,color:"#713F12",lineHeight:1.7}}>
-        No debes pisar ni apoyar tu pie en tratamiento hasta que el medico te lo permita.
+        No debes pisar ni apoyar tu pie en tratamiento hasta que el médico te lo permita.
       </div>
       <button onClick={onBack} style={{background:"#152E44",color:"#FFF",border:"none",borderRadius:14,padding:"14px 28px",fontWeight:700,fontSize:15}}>Volver al inicio</button>
     </div>
@@ -45,11 +45,11 @@ function AppointmentForm({ onBack }) {
       <div style={{background:"linear-gradient(160deg,#080F1A,#152E44)",padding:"52px 24px 28px"}}>
         <button onClick={onBack} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:20,padding:"7px 16px",color:"#FFF",fontSize:13,fontWeight:600,marginBottom:16}}>Volver</button>
         <div style={{fontFamily:"'Playfair Display',serif",fontSize:24,color:"#FFF",fontWeight:800}}>Solicitar Cita</div>
-        <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,marginTop:4}}>Consulta gratuita con el Dr. Rogelio Sanchez</div>
+        <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,marginTop:4}}>Consulta  con el Dr. Rogelio Sanchez</div>
       </div>
       <div style={{padding:"20px 20px 100px",flex:1}}>
         <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:12,padding:"12px 16px",marginBottom:20,fontSize:12,color:"#713F12",lineHeight:1.6}}>
-          No debes pisar ni apoyar tu pie en tratamiento hasta que el medico te lo permita.
+          No debes pisar ni apoyar tu pie en tratamiento hasta que el médico te lo permita.
         </div>
         {[{l:"Nombre completo",f:"name",p:"Tu nombre"},{l:"Telefono WhatsApp",f:"phone",p:"10 digitos"},{l:"Correo opcional",f:"email",p:"tu@correo.com"}].map(function(x){return (
           <div key={x.f} style={{marginBottom:14}}>
@@ -78,7 +78,7 @@ function AppointmentForm({ onBack }) {
           </div>
         </div>
         <button onClick={submit} disabled={loading} style={{background:loading?"#C4BDB5":"#1A5C40",color:"#FFF",border:"none",borderRadius:14,padding:16,fontWeight:700,fontSize:16,width:"100%"}}>
-          {loading?"Enviando...":"Solicitar cita gratuita"}
+          {loading?"Enviando...":"Solicitar cita "}
         </button>
       </div>
     </div>
@@ -126,13 +126,13 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
         <button onClick={onAppointment} style={{width:"100%",background:"linear-gradient(135deg,#1A5C40,#22C55E)",color:"#FFF",border:"none",borderRadius:18,padding:"20px",marginBottom:16,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}>
           <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{"\uD83D\uDCC5"}</div>
           <div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:800}}>Solicitar Cita Gratuita</div>
-            <div style={{fontSize:13,opacity:0.85,marginTop:2}}>Consulta presencial sin costo</div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:800}}>Solicitar Cita</div>
+            <div style={{fontSize:13,opacity:0.85,marginTop:2}}>Consulta presencial </div>
             <div style={{background:"rgba(255,255,255,0.25)",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,marginTop:6,display:"inline-block"}}>Sin registro necesario</div>
           </div>
         </button>
         <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:12,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#713F12",textAlign:"center",fontWeight:600}}>
-          No debes pisar ni apoyar tu pie en tratamiento hasta que el medico te lo permita
+          No debes pisar ni apoyar tu pie en tratamiento hasta que el médico te lo permita
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
           {[{icon:"\uD83D\uDCCA",t:"Glucosa y presion"},{icon:"\uD83D\uDC8A",t:"Recordatorios"},{icon:"\uD83D\uDCF9",t:"Videollamada"},{icon:"\uD83E\uDD57",t:"Dieta con IA"},{icon:"\uD83D\uDCAA",t:"Ejercicio"},{icon:"\uD83E\uDD16",t:"Coach IA 24/7"}].map(function(f,i){return (
