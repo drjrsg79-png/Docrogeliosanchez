@@ -79,8 +79,7 @@ function AppointmentForm({ onBack }) {
           </div>
         </div>
         <button onClick={submit} disabled={loading} style={{background:loading?"#C4BDB5":"#1A5C40",color:"#FFF",border:"none",borderRadius:14,padding:16,fontWeight:700,fontSize:16,width:"100%",boxShadow:"0 6px 24px rgba(26,92,64,0.35)"}}>
-          {loading?"Enviando...":"Solicitar cita gratuita →"}
-        </button>
+          {loading?"Enviando...":"Solicitar cita gratuita →        </button>
       </div>
     </div>
   );
@@ -120,9 +119,8 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
       <div style={{background:"linear-gradient(160deg,#080F1A,#152E44,#1E4568)",padding:"60px 28px 40px",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",background:"rgba(184,130,10,0.08)"}}/>
         <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#B8820A,#D4A534)",margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 8px 32px rgba(184,130,10,0.4)"}}>⚕️</div>
-        <div style={{fontFamily:"Playfair Display,serif",fontSize:24,color:"#FFF",fontWeight:800}}>Dr. Rogelio Sánchez</div>
-        <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginTop:6,lineHeight:1.6}}>Medicina Interna · Terapia Intensiva{"
-"}Salvamento de Extremidad · Pie Diabético</div>
+        <div style={{fontFamily:"Playfair Display,serif",fontSize:24,color:"#FFF",fontWeight:800}}>Dr. Rogelio Sánchez</div>v>
+        <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginTop:6,lineHeight:1.6}}>Medicina Interna · Terapia IntensivaSalvamento de Extremidad · Pie Diabético</div>
       </div>
 
       <div style={{padding:"20px 20px 0"}}>
@@ -161,8 +159,7 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
             style={{background:"#F0EDE7",border:`1.5px solid ${error?"#A02828":"rgba(21,46,68,0.10)"}`,borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10,letterSpacing:"0.04em"}}/>
           {error&&<div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"8px 14px",fontSize:12,marginBottom:10}}>{error}</div>}
           <button onClick={handleLogin} disabled={loading||!input.trim()} style={{background:loading||!input.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
-            {loading?"Verificando...":"Ingresar →"}
-          </button>
+            {loading?"Verificando...":"Ingresar →          </button>
         </div>
         <div style={{textAlign:"center",marginTop:16,fontSize:11,color:"#C4BDB5",paddingBottom:32}}>appDrRogelioSanchez © 2025</div>
       </div>
