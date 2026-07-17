@@ -317,7 +317,6 @@ export default function DoctorApp({ doctorCode, onLogout }) {
           { v: "alertas", l: `Alertas${alerts.length > 0 ? ` (${alerts.length})` : ""}` },
           { v: "video", l: "Video" },
           { v: "citas", l: "Citas" },
-          { v: "citas", l: "Citas" },
         ].map(t => (
           <button key={t.v} onClick={() => setTab(t.v)} style={{ background: "none", border: "none", borderBottom: `2.5px solid ${tab === t.v ? C.gold : "transparent"}`, padding: "12px 16px", fontSize: 13, fontWeight: tab === t.v ? 700 : 500, color: tab === t.v ? C.gold : C.muted, transition: "all 0.2s" }}>
             {t.l}
