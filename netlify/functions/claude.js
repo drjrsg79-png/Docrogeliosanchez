@@ -13,7 +13,7 @@ exports.handler = async (event) => {
 
   // Validar código (paciente o doctor)
   const code = (body.accessCode || "").trim();
-  const isDr = code === `DR-ROGELIO-${DOCTOR_PW}`;
+  const isDr = code.toUpperCase() === ("DR-ROGELIO-"+DOCTOR_PW).toUpperCase();
   const isPt = ALLOWED.includes(code);
   if (!isDr && !isPt) {
     return { statusCode: 401, headers: h, body: JSON.stringify({ error: "Código de acceso inválido o suscripción vencida." }) };
