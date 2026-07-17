@@ -1344,7 +1344,7 @@ export default function PatientApp({patientCode,onLogout}) {
               <span style={{fontSize:9,fontWeight:isActive?700:500,color:isActive?(isVideo?C.emerald:C.navy):C.muted,letterSpacing:"0.01em",lineHeight:1,whiteSpace:"nowrap"}}>
                 {n.l}
                     </span>
-            </button>
+</button>
           );
         })}
       </div>
