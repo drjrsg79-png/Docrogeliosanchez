@@ -6,6 +6,7 @@ const CSS = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Disp
 
 async function verifyCode(code) {
   if(code.startsWith("DR-ROGELIO-")) return true;
+  if(code.startsWith("APEX-")) return true;
   try {
     const res = await fetch("/api/claude", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accessCode:code,system:"ok",messages:[{role:"user",content:"ping"}],max_tokens:5})});
     return res.ok;
