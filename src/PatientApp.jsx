@@ -433,7 +433,7 @@ function GlucosaScreen({profile,patientCode}) {
         {view==="diet"&&(!dietPlan&&!dietLoad?<Card style={{textAlign:"center",padding:28}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:C.ink,marginBottom:8}}>Plan de dieta para diabetes</div><div style={{color:C.muted,fontSize:13,marginBottom:18}}>Plan de 7 días con bajo índice glucémico y control de carbohidratos.</div><PBtn onClick={genDiet} color={C.emerald}>Generar plan diabético</PBtn></Card>:dietLoad?<Card style={{textAlign:"center",padding:36}}><Spin/><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.emerald}}>Calculando...</div></Card>:dietPlan&&(
           <>
             <Card style={{background:C.emerald}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#FFF",marginBottom:6}}>{dietPlan.caloriasDiarias} kcal/día</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{(dietPlan.principios||[]).slice(0,3).map((p,i)=><div key={i} style={{background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#FFF",fontWeight:600}}>{p}</div>)}</div></Card>
-            {(dietPlan.dias||[]).map((d,i)=><Card key={i}><div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:C.ink,marginBottom:10}}>{d.dia}</div>{[["Desayuno",d.desayuno],["Almuerzo",d.almuerzo],["Cena",d.cena]].map(([t,meal])=>meal&&<div key={t} style={{marginBottom:8,paddingLeft:10,borderLeft:`3px solid ${C.emerald}30`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase"}}>{t}</div><div style={{display:"flex",gap:5}}>{meal.carbos&&<span style={{background:"#FEF3C7",color:C.amber,borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700}}>{meal.carbos}</span>}</div></div><div style={{fontSize:13,color:C.inkSec}}>{meal.descripcion}</div></div>)}</Card>)}
+            {(dietPlan.dias||[]).map((d,i)=><Card key={i}><div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:C.ink,marginBottom:10}}>{d.dia}</div>{[["Desayuno",d.desayuno],["Almuerzo",d.almuerzo],["Cena",d.cena]].map(([t,meal])=>meal&&<div key={t} style={{marginBottom:8,paddingLeft:10,borderLeft:`3px solid ${C.emerald}30`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase"}}>{t}</div><div style={{display:"flex",gap:5}}>{meal.carbos&&<span style={{background:"#FEF3C7",color:C.amber,borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700}}>{meal.carbos}</span>}</div></div><div style={{fontSize:13,color:C.inkSec}}>{typeof meal==='string'?meal:meal.descripcion}</div></div>)}</Card>)}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
               <Card style={{background:"#FEE2E2",border:"1px solid #FECACA",margin:0}}><div style={{fontSize:11,color:C.scarlet,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>Evitar</div>{(dietPlan.alimentosEvitar||[]).map((a,i)=><div key={i} style={{fontSize:12,color:"#7F1D1D",marginBottom:3}}>✕ {a}</div>)}</Card>
               <Card style={{background:"#D1FAE5",border:"1px solid #A7F3D0",margin:0}}><div style={{fontSize:11,color:C.emerald,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>Priorizar</div>{(dietPlan.alimentosRecomendados||[]).map((a,i)=><div key={i} style={{fontSize:12,color:"#064E3B",marginBottom:3}}>✓ {a}</div>)}</Card>
@@ -1218,67 +1218,6 @@ function Chat({profile,workoutPlan,meals,exerciseLog}) {
 
 
 // ══════════════════════════════════════════════════════
-// SCREEN: PÉPTIDOS
-// ══════════════════════════════════════════════════════
-const PEPTIDES=[
-  {name:"BPC-157",full:"Body Protection Compound",cat:"Recuperación",color:"#1A5C40",dose:"250–500 mcg/día",benefits:"Cicatrización acelerada, antiinflamatorio, protección gástrica y tendones.",recon:"2mg + 1-2ml agua bacteriostática → 1000-2000 mcg/ml\n• 500mcg = 50U · 250mcg = 25U",apply:"Subcutáneo 45°, abdomen o muslo. Rotar sitio.",cycle:"4–8 semanas activo, descanso 2–4 sem",timing:"Mañana en ayunas o antes de dormir"},
-  {name:"TB-500",full:"Thymosin Beta-4",cat:"Recuperación",color:"#1A3F8C",dose:"2–2.5 mg, 2x/semana",benefits:"Regeneración muscular, flexibilidad articular, reparación de tendones y ligamentos.",recon:"5mg + 1ml agua bacteriostática → 5mg/ml\n• 2.5mg = 0.5ml = 50U",apply:"Subcutáneo o intramuscular.",cycle:"4–6 semanas de carga → mantenimiento mensual",timing:"Días de entrenamiento, post-sesión"},
-  {name:"Ipamorelin + CJC-1295",full:"GHRP + GHRH Stack",cat:"GH / Composición",color:"#1E4568",dose:"100–300 mcg c/u, 1–3x/día",benefits:"Liberación natural de GH, composición corporal, sueño profundo, recuperación y lipólisis.",recon:"2mg + 2ml agua bact. → 1000mcg/ml\n• 200mcg = 0.2ml c/u (mezclar misma jeringa)",apply:"Subcutáneo abdominal.",cycle:"3–6 meses continuos, pausas de 4 semanas",timing:"Antes de dormir (principal) + mañana en ayunas"},
-  {name:"Semaglutida",full:"GLP-1 Receptor Agonist",cat:"Pérdida de grasa",color:"#B8820A",dose:"0.25mg/sem → titulación gradual hasta 2.4mg",benefits:"Control del apetito, pérdida de peso 12–15%, mejora sensibilidad a insulina.",recon:"3mg + 1.5ml agua bact. → 2mg/ml\n• 0.25mg = 12.5U · 1mg = 50U",apply:"Subcutáneo: abdomen, muslo o brazo. Rotar zonas.",cycle:"Largo plazo con supervisión médica.",timing:"Mismo día cada semana, a cualquier hora"},
-  {name:"AOD-9604",full:"HGH Fragment Anti-Obesity",cat:"Pérdida de grasa",color:"#A02828",dose:"300–500 mcg/día",benefits:"Activa lipólisis sin elevar IGF-1. Efecto localizado en grasa abdominal.",recon:"2mg + 1ml agua bact. → 2000mcg/ml\n• 500mcg = 25U",apply:"Subcutáneo, zona adiposa objetivo.",cycle:"4–8 semanas",timing:"Mañana en ayunas, esperar 30 min antes de comer"},
-];
-
-function Peptidos() {
-  const [sel,setSel]=useState(null);
-  if(sel) return (
-    <div style={{paddingBottom:110}}>
-      <div style={{background:sel.color,padding:"56px 22px 22px"}}>
-        <button onClick={()=>setSel(null)} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:20,padding:"7px 16px",color:"#FFF",fontSize:13,fontWeight:600,marginBottom:14}}>← Volver</button>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#FFF",fontWeight:800}}>{sel.name}</div>
-        <div style={{color:"rgba(255,255,255,0.65)",fontSize:13}}>{sel.full}</div>
-      </div>
-      <div style={{padding:"16px 16px 0"}}>
-        {[{t:"Beneficios",c:sel.benefits},{t:"Dosis",c:sel.dose},{t:"Timing",c:sel.timing},{t:"Reconstitución",c:sel.recon},{t:"Aplicación",c:sel.apply},{t:"Ciclo",c:sel.cycle}].map(it=>(
-          <Card key={it.t} style={{borderLeft:`4px solid ${sel.color}`}}>
-            <div style={{fontSize:11,color:sel.color,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>{it.t}</div>
-            <div style={{color:C.inkSec,fontSize:14,lineHeight:1.7,whiteSpace:"pre-line"}}>{it.c}</div>
-          </Card>
-        ))}
-        <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:14,padding:"12px 16px",fontSize:12,color:"#713F12"}}>Información educativa. Consulta siempre con el Dr. Rogelio antes de cualquier protocolo.</div>
-      </div>
-    </div>
-  );
-
-  const cats=[...new Set(PEPTIDES.map(p=>p.cat))];
-  return (
-    <div style={{paddingBottom:110}}>
-      <Hdr title="Péptidos" sub="Protocolos y guías de uso" imgId="1576091160550-2173dba999ef"/>
-      <div style={{padding:"16px 16px 0"}}>
-        <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:14,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#713F12"}}>Información educativa. Consulta con el Dr. Rogelio antes de cualquier uso.</div>
-        {cats.map(cat=>(
-          <div key={cat}>
-            <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10,marginTop:8}}>{cat}</div>
-            {PEPTIDES.filter(p=>p.cat===cat).map(p=>(
-              <button key={p.name} onClick={()=>setSel(p)} style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 18px",background:C.card,border:"none",borderRadius:18,marginBottom:10,boxShadow:C.shadow,textAlign:"left"}}>
-                <div style={{width:48,height:48,borderRadius:12,background:p.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <div style={{width:18,height:18,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.65)"}}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:C.ink}}>{p.name}</div>
-                  <div style={{fontSize:12,color:C.muted,marginBottom:4}}>{p.full}</div>
-                  <Badge color={p.color}>{p.dose}</Badge>
-                </div>
-                <span style={{color:C.ghost,fontSize:20}}>›</span>
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════
 // SCREEN: TENIS
 // ══════════════════════════════════════════════════════
 function Tenis({profile}) {
@@ -1352,7 +1291,6 @@ const NAV=[
   {l:"Nutrición",icon:"🥗"},
   {l:"Ejercicio",icon:"💪"},
   {l:"Chat IA", icon:"🤖"},
-  {l:"Péptidos",icon:"💉"},
 ];
 
 export default function PatientApp({patientCode,onLogout}) {
@@ -1377,7 +1315,6 @@ export default function PatientApp({patientCode,onLogout}) {
     <Nutrition profile={profile} meals={meals} setMeals={setMeals}/>,
     <Exercise profile={profile} exerciseLog={exerciseLog} setExerciseLog={setExerciseLog} workoutPlan={workoutPlan} setWorkoutPlan={setWorkoutPlan}/>,
     <Chat profile={profile} workoutPlan={workoutPlan} meals={meals} exerciseLog={exerciseLog}/>,
-    <Peptidos/>,
   ];
 
   return (
@@ -1406,7 +1343,7 @@ export default function PatientApp({patientCode,onLogout}) {
               )}
               <span style={{fontSize:9,fontWeight:isActive?700:500,color:isActive?(isVideo?C.emerald:C.navy):C.muted,letterSpacing:"0.01em",lineHeight:1,whiteSpace:"nowrap"}}>
                 {n.l}
-              </span>
+                    </span>
             </button>
           );
         })}
