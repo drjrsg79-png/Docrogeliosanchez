@@ -537,7 +537,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
                       const ex=availability.find(a=>a.day_of_week===i);
                       const ns=ex?availability.map(a=>a.day_of_week===i?{...a,active:!a.active}:a):[...availability,{day_of_week:i,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];
                       setAvailability(ns);
-                      await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns})});
+                      await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns})});const r=await fetch("/api/appointments?action=get-availability");const dd=await r.json();if(dd.ok)setAvailability(dd.availability||[]);
                     }} style={{background:isActive?C.emerald:"rgba(255,255,255,0.08)",color:isActive?"#FFF":C.muted,border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:13}}>{d}</button>;
                   })}
               </div>
