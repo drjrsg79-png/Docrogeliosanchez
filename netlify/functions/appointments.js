@@ -87,4 +87,4 @@ exports.handler = async (event) => {
     }
     return {statusCode:404,headers:H,body:JSON.stringify({error:"No encontrado"})};
   }catch(err){return {statusCode:500,headers:H,body:JSON.stringify({error:err.message})};}
-};
+};// appointments v2
