@@ -94,13 +94,13 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
     var saved = localStorage.getItem("apex_code");
     if (saved) {
       var upper = saved.toUpperCase();
-      if (upper.startsWith("DR-ROGELIO-")) onDoctor(upper);
+      if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper); else if (code.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(code);
       else onPatient(upper);
     }
   }, []);
 
   async function handleLogin() {
-    var code = input.trim().toUpperCase();
+    var code = input.trim();
     if (!code) return;
     setLoading(true); setError("");
     var ok = await verifyCode(code);
@@ -145,7 +145,7 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
         <div style={{background:"#FFF",borderRadius:20,padding:"20px",boxShadow:"0 8px 40px rgba(21,46,68,0.10)"}}>
           <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1A1714",marginBottom:4}}>Plan completo con IA</div>
           <div style={{color:"#8C857C",fontSize:12,marginBottom:14}}>$300 MXN/mes con codigo de acceso</div>
-          <input placeholder="Codigo APEX-0001" value={input} onChange={function(e){setInput(e.target.value.toUpperCase());setError("");}} onKeyDown={function(e){if(e.key==="Enter")handleLogin();}} style={{background:"#F0EDE7",border:"1.5px solid "+(error?"#A02828":"rgba(21,46,68,0.10)"),borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10}}/>
+          <input placeholder="Codigo APEX-0001" value={input} onChange={function(e){setInput(e.target.value);setError("");}} onKeyDown={function(e){if(e.key==="Enter")handleLogin();}} style={{background:"#F0EDE7",border:"1.5px solid "+(error?"#A02828":"rgba(21,46,68,0.10)"),borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10}}/>
           {error && <div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"8px 14px",fontSize:12,marginBottom:10}}>{error}</div>}
           <button onClick={handleLogin} disabled={loading||!input.trim()} style={{background:loading||!input.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
             {loading?"Verificando...":"Ingresar"}
