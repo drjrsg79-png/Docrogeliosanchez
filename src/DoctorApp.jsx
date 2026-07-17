@@ -57,6 +57,17 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   const [noteInput, setNoteInput] = useState("");
   const [callActive, setCallActive] = useState(null); // {room_name, patient_name, id}
   const [lastPendingCount, setLastPendingCount] = useState(0);
+  const [appointments, setAppointments] = useState([]);
+  const [availability, setAvailability] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [newBlock, setNewBlock] = useState({date:"",reason:""});
+  const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
+  const [appointments, setAppointments] = useState([]);
+  const [availability, setAvailability] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [newBlock, setNewBlock] = useState({date:"",reason:""});
+  const [apptLoad, setApptLoad] = useState(false);
+  const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
 
   const doctorPassword = doctorCode.replace("DR-ROGELIO-", "");
 
@@ -83,8 +94,21 @@ export default function DoctorApp({ doctorCode, onLogout }) {
     fetchDashboard();
     const interval = setInterval(fetchDashboard, 30000); // refresh each 30s
     Notification.requestPermission();
+    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+    fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok){setAvailability(d.availability||[]);setBlockedDates(d.blocked||[]);}});
+    fetchAppointments();
     return () => clearInterval(interval);
   }, []);
+
+
+  async function confirmAppt(id, date, time) {
+    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"confirmed",confirmedDate:date,confirmedTime:time})});
+    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+  }
+  async function cancelAppt(id) {
+    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"cancelled"})});
+    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+  }
 
   async function loadPatientHistory(code) {
     try {
@@ -92,6 +116,57 @@ export default function DoctorApp({ doctorCode, onLogout }) {
       const data = await res.json();
       if (data.ok) setPatHistory(data.data || []);
     } catch {}
+  }
+
+  async function fetchAppointments() {
+    try {
+      const [apptRes, availRes] = await Promise.all([
+        fetch("/api/appointments?action=list&doctorPassword="+doctorPassword),
+        fetch("/api/appointments?action=get-availability")
+      ]);
+      const apptData = await apptRes.json();
+      const availData = await availRes.json();
+      if(apptData.ok) setAppointments(apptData.data||[]);
+      if(availData.ok) { setAvailability(availData.availability||[]); setBlockedDates(availData.blocked||[]); }
+    } catch {}
+  }
+
+  async function confirmAppt(id, date, time) {
+    setApptLoad(true);
+    await fetch("/api/appointments?action=update", {method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({doctorPassword,id,status:"confirmed",confirmedDate:date,confirmedTime:time})});
+    await fetchAppointments();
+    setApptLoad(false);
+  }
+
+  async function cancelAppt(id) {
+    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({doctorPassword,id,status:"cancelled"})});
+    await fetchAppointments();
+  }
+
+  async function blockDate() {
+    if(!newBlock.date) return;
+    await fetch("/api/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({doctorPassword,...newBlock,fullDay:true})});
+    setNewBlock({date:"",reason:""});
+    await fetchAppointments();
+  }
+
+  async function unblockDate(id) {
+    await fetch("/api/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({doctorPassword,id})});
+    await fetchAppointments();
+  }
+
+  async function toggleDay(dayNum) {
+    const existing = availability.find(a=>a.day_of_week===dayNum);
+    const newSlots = existing
+      ? availability.map(a=>a.day_of_week===dayNum?{...a,active:!a.active}:a)
+      : [...availability,{day_of_week:dayNum,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];
+    setAvailability(newSlots);
+    await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({doctorPassword,slots:newSlots})});
   }
 
   async function addPatient() {
@@ -246,6 +321,8 @@ export default function DoctorApp({ doctorCode, onLogout }) {
           { v: "pacientes", l: "Pacientes" },
           { v: "alertas", l: `Alertas${alerts.length > 0 ? ` (${alerts.length})` : ""}` },
           { v: "video", l: "Video" },
+          { v: "citas", l: "Citas" },
+          { v: "citas", l: "Citas" },
         ].map(t => (
           <button key={t.v} onClick={() => setTab(t.v)} style={{ background: "none", border: "none", borderBottom: `2.5px solid ${tab === t.v ? C.gold : "transparent"}`, padding: "12px 16px", fontSize: 13, fontWeight: tab === t.v ? 700 : 500, color: tab === t.v ? C.gold : C.muted, transition: "all 0.2s" }}>
             {t.l}
@@ -425,6 +502,51 @@ export default function DoctorApp({ doctorCode, onLogout }) {
                 </div>
               </DCard>
             ))}
+          </>
+        )}
+
+
+        {tab==="citas"&&(
+          <>
+            <DCard>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.text,marginBottom:12}}>Citas pendientes</div>
+              {appointments.filter(a=>a.status==="pending").length===0&&<div style={{color:C.muted,fontSize:13}}>Sin citas pendientes</div>}
+              {appointments.filter(a=>a.status==="pending").map(a=>(
+                <div key={a.id} style={{background:"rgba(255,255,255,0.05)",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                  <div style={{color:C.text,fontWeight:700}}>{a.patient_name}</div>
+                  <div style={{color:C.muted,fontSize:12,marginTop:2}}>{a.patient_phone} | {a.reason}</div>
+                  <div style={{color:C.muted,fontSize:12}}>Solicita: {a.preferred_date} {a.preferred_time}</div>
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <button onClick={()=>confirmAppt(a.id,a.preferred_date,a.preferred_time)} style={{flex:1,background:C.emerald,color:"#FFF",border:"none",borderRadius:8,padding:"8px",fontWeight:700,fontSize:13}}>Confirmar</button>
+                    <button onClick={()=>cancelAppt(a.id)} style={{flex:1,background:C.scarlet,color:"#FFF",border:"none",borderRadius:8,padding:"8px",fontWeight:700,fontSize:13}}>Cancelar</button>
+                  </div>
+                </div>
+              ))}
+            </DCard>
+            <DCard>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.text,marginBottom:12}}>Confirmadas</div>
+              {appointments.filter(a=>a.status==="confirmed").slice(0,10).map(a=>(
+                <div key={a.id} style={{padding:"8px 0",borderTop:"1px solid "+C.border}}>
+                  <div style={{color:C.text,fontWeight:600,fontSize:14}}>{a.patient_name}</div>
+                  <div style={{color:C.emerald,fontSize:12}}>{a.confirmed_date} {a.confirmed_time} | {a.reason}</div>
+                  <div style={{color:C.muted,fontSize:11}}>{a.patient_phone}</div>
+                </div>
+              ))}
+            </DCard>
+            <DCard>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.text,marginBottom:12}}>Dias disponibles</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+                {["Dom","Lun","Mar","Mie","Jue","Vie","Sab"].map((d,i)=>{
+                  const active=availability.find(a=>a.day_of_week===i&&a.active);
+                  return <button key={i} onClick={async()=>{const ex=availability.find(a=>a.day_of_week===i);const ns=ex?availability.map(a=>a.day_of_week===i?{...a,active:!a.active}:a):[...availability,{day_of_week:i,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];setAvailability(ns);await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns});});}} style={{background:active?C.emerald:"rgba(255,255,255,0.08)",color:active?"#FFF":C.muted,border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:13}}>{d}</button>;
+                })}
+              </div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:C.text,marginBottom:10}}>Bloquear fecha</div>
+              <input type="date" value={newBlock.date} onChange={e=>setNewBlock(b=>({...b,date:e.target.value}))} style={{background:"rgba(255,255,255,0.07)",border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",color:C.text,fontSize:14,width:"100%",outline:"none",marginBottom:8}}/>
+              <input placeholder="Motivo (ej: vacaciones, procedimiento)" value={newBlock.reason} onChange={e=>setNewBlock(b=>({...b,reason:e.target.value}))} style={{background:"rgba(255,255,255,0.07)",border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",color:C.text,fontSize:14,width:"100%",outline:"none",marginBottom:8}}/>
+              <button onClick={async()=>{if(!newBlock.date)return;await fetch("/api/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,...newBlock,fullDay:true})});setNewBlock({date:"",reason:""});fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:C.scarlet,color:"#FFF",border:"none",borderRadius:10,padding:"11px",fontWeight:700,fontSize:14,width:"100%"}}>Bloquear esta fecha</button>
+              {blockedDates.length>0&&<div style={{marginTop:12}}><div style={{color:C.muted,fontSize:12,marginBottom:8}}>Fechas bloqueadas:</div>{blockedDates.map(b=><div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+C.border}}><div><div style={{color:C.text,fontSize:13}}>{b.date}</div><div style={{color:C.muted,fontSize:11}}>{b.reason}</div></div><button onClick={async()=>{await fetch("/api/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id:b.id})});fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:"rgba(239,68,68,0.2)",color:C.scarlet,border:"none",borderRadius:8,padding:"5px 10px",fontSize:12,fontWeight:700}}>Quitar</button></div>)}</div>}
+            </DCard>
           </>
         )}
 
