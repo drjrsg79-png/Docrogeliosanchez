@@ -89,20 +89,20 @@ export default function DoctorApp({ doctorCode, onLogout }) {
     fetchDashboard();
     const interval = setInterval(fetchDashboard, 30000); // refresh each 30s
     Notification.requestPermission();
-    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
-    fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok){setAvailability(d.availability||[]);setBlockedDates(d.blocked||[]);}});
+    fetch("/.netlify/functions/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+    fetch("/.netlify/functions/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok){setAvailability(d.availability||[]);setBlockedDates(d.blocked||[]);}});
     fetchAppointments();
     return () => clearInterval(interval);
   }, []);
 
 
   async function confirmAppt(id, date, time) {
-    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"confirmed",confirmedDate:date,confirmedTime:time})});
-    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+    await fetch("/.netlify/functions/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"confirmed",confirmedDate:date,confirmedTime:time})});
+    fetch("/.netlify/functions/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
   }
   async function cancelAppt(id) {
-    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"cancelled"})});
-    fetch("/api/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
+    await fetch("/.netlify/functions/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id,status:"cancelled"})});
+    fetch("/.netlify/functions/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
   }
 
   async function loadPatientHistory(code) {
@@ -116,8 +116,8 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   async function fetchAppointments() {
     try {
       const [apptRes, availRes] = await Promise.all([
-        fetch("/api/appointments?action=list&doctorPassword="+doctorPassword),
-        fetch("/api/appointments?action=get-availability")
+        fetch("/.netlify/functions/appointments?action=list&doctorPassword="+doctorPassword),
+        fetch("/.netlify/functions/appointments?action=get-availability")
       ]);
       const apptData = await apptRes.json();
       const availData = await availRes.json();
@@ -128,28 +128,28 @@ export default function DoctorApp({ doctorCode, onLogout }) {
 
   async function confirmAppt(id, date, time) {
     setApptLoad(true);
-    await fetch("/api/appointments?action=update", {method:"POST",headers:{"Content-Type":"application/json"},
+    await fetch("/.netlify/functions/appointments?action=update", {method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({doctorPassword,id,status:"confirmed",confirmedDate:date,confirmedTime:time})});
     await fetchAppointments();
     setApptLoad(false);
   }
 
   async function cancelAppt(id) {
-    await fetch("/api/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},
+    await fetch("/.netlify/functions/appointments?action=update",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({doctorPassword,id,status:"cancelled"})});
     await fetchAppointments();
   }
 
   async function blockDate() {
     if(!newBlock.date) return;
-    await fetch("/api/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},
+    await fetch("/.netlify/functions/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({doctorPassword,...newBlock,fullDay:true})});
     setNewBlock({date:"",reason:""});
     await fetchAppointments();
   }
 
   async function unblockDate(id) {
-    await fetch("/api/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},
+    await fetch("/.netlify/functions/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({doctorPassword,id})});
     await fetchAppointments();
   }
@@ -160,7 +160,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
       ? availability.map(a=>a.day_of_week===dayNum?{...a,active:!a.active}:a)
       : [...availability,{day_of_week:dayNum,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];
     setAvailability(newSlots);
-    await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},
+    await fetch("/.netlify/functions/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({doctorPassword,slots:newSlots})});
   }
 
@@ -537,9 +537,9 @@ export default function DoctorApp({ doctorCode, onLogout }) {
                     <div key={av.day_of_week} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                       <div style={{color:C.text,fontWeight:700,fontSize:13,minWidth:36}}>{["Dom","Lun","Mar","Mie","Jue","Vie","Sab"][av.day_of_week]}</div>
                       <span style={{color:C.muted,fontSize:12}}>de</span>
-                      <input type="time" value={av.start_time||"09:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,start_time:e.target.value}:a))} onBlur={async()=>{await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
+                      <input type="time" value={av.start_time||"09:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,start_time:e.target.value}:a))} onBlur={async()=>{await fetch("/.netlify/functions/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
                       <span style={{color:C.muted,fontSize:12}}>a</span>
-                      <input type="time" value={av.end_time||"17:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,end_time:e.target.value}:a))} onBlur={async()=>{await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
+                      <input type="time" value={av.end_time||"17:00"} onChange={e=>setAvailability(prev=>prev.map(a=>a.day_of_week===av.day_of_week?{...a,end_time:e.target.value}:a))} onBlur={async()=>{await fetch("/.netlify/functions/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:availability})});}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",color:C.text,fontSize:15,outline:"none"}}/>
                     </div>
                   ))}
                 </div>
@@ -551,15 +551,15 @@ export default function DoctorApp({ doctorCode, onLogout }) {
                       const ex=availability.find(a=>a.day_of_week===i);
                       const ns=ex?availability.map(a=>a.day_of_week===i?{...a,active:!a.active}:a):[...availability,{day_of_week:i,start_time:"09:00",end_time:"18:00",slot_minutes:30,active:true}];
                       setAvailability(ns);
-                      await fetch("/api/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns})});const r=await fetch("/api/appointments?action=get-availability");const dd=await r.json();if(dd.ok)setAvailability(dd.availability||[]);
+                      await fetch("/.netlify/functions/appointments?action=set-availability",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,slots:ns})});const r=await fetch("/.netlify/functions/appointments?action=get-availability");const dd=await r.json();if(dd.ok)setAvailability(dd.availability||[]);
                     }} style={{background:isActive?C.emerald:"rgba(255,255,255,0.08)",color:isActive?"#FFF":C.muted,border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:13}}>{d}</button>;
                   })}
               </div>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:C.text,marginBottom:10}}>Bloquear fecha</div>
               <input type="date" value={newBlock.date} onChange={e=>setNewBlock(b=>({...b,date:e.target.value}))} style={{background:"rgba(255,255,255,0.07)",border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",color:C.text,fontSize:14,width:"100%",outline:"none",marginBottom:8}}/>
               <input placeholder="Motivo (ej: vacaciones, procedimiento)" value={newBlock.reason} onChange={e=>setNewBlock(b=>({...b,reason:e.target.value}))} style={{background:"rgba(255,255,255,0.07)",border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",color:C.text,fontSize:14,width:"100%",outline:"none",marginBottom:8}}/>
-              <button onClick={async()=>{if(!newBlock.date)return;await fetch("/api/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,...newBlock,fullDay:true})});setNewBlock({date:"",reason:""});fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:C.scarlet,color:"#FFF",border:"none",borderRadius:10,padding:"11px",fontWeight:700,fontSize:14,width:"100%"}}>Bloquear esta fecha</button>
-              {blockedDates.length>0&&<div style={{marginTop:12}}><div style={{color:C.muted,fontSize:12,marginBottom:8}}>Fechas bloqueadas:</div>{blockedDates.map(b=><div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+C.border}}><div><div style={{color:C.text,fontSize:13}}>{b.date}</div><div style={{color:C.muted,fontSize:11}}>{b.reason}</div></div><button onClick={async()=>{await fetch("/api/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id:b.id})});fetch("/api/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:"rgba(239,68,68,0.2)",color:C.scarlet,border:"none",borderRadius:8,padding:"5px 10px",fontSize:12,fontWeight:700}}>Quitar</button></div>)}</div>}
+              <button onClick={async()=>{if(!newBlock.date)return;await fetch("/.netlify/functions/appointments?action=block-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,...newBlock,fullDay:true})});setNewBlock({date:"",reason:""});fetch("/.netlify/functions/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:C.scarlet,color:"#FFF",border:"none",borderRadius:10,padding:"11px",fontWeight:700,fontSize:14,width:"100%"}}>Bloquear esta fecha</button>
+              {blockedDates.length>0&&<div style={{marginTop:12}}><div style={{color:C.muted,fontSize:12,marginBottom:8}}>Fechas bloqueadas:</div>{blockedDates.map(b=><div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+C.border}}><div><div style={{color:C.text,fontSize:13}}>{b.date}</div><div style={{color:C.muted,fontSize:11}}>{b.reason}</div></div><button onClick={async()=>{await fetch("/.netlify/functions/appointments?action=unblock-date",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({doctorPassword,id:b.id})});fetch("/.netlify/functions/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok)setBlockedDates(d.blocked||[]);});}} style={{background:"rgba(239,68,68,0.2)",color:C.scarlet,border:"none",borderRadius:8,padding:"5px 10px",fontSize:12,fontWeight:700}}>Quitar</button></div>)}</div>}
             </DCard>
           </>
         )}

@@ -851,10 +851,40 @@ function Nutrition({profile,meals,setMeals}) {
     setModal(false);setQuery("");setResult(null);
   }
 
+  const [dietForm,setDietForm]=useState({diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""});
+  const [dietFormDone,setDietFormDone]=useState(false);
+
   async function genDiet(){
     setPlanLoad(true);
     const tdee=calcTDEE(profile),target=goalCals(tdee,profile.goal);
-    const text=await callClaude(`Nutricionista. SOLO JSON.`,`Plan 7 días. ${profile.sex},${profile.age}a,${profile.weight}kg,objetivo:${profile.goal},meta:${target}kcal.\nJSON:{"objetivo":"...","caloriasDiarias":${target},"distribucionMacros":{"carbs":"Xg","proteina":"Xg","grasas":"Xg"},"dias":[{"dia":"Lunes","desayuno":"...","almuerzo":"...","cena":"...","snack":"...","kcal":0}],"consejos":["t1","t2"]}`,1500);
+    const antecedentes=[];
+    if(dietForm.diabetes) antecedentes.push("Diabetes mellitus - dieta baja en carbohidratos simples, indice glucemico bajo");
+    if(dietForm.renal) antecedentes.push("Enfermedad renal - restriccion de potasio, fosforo y proteina moderada");
+    if(dietForm.hepatic) antecedentes.push("Enfermedad hepatica - evitar alcohol, grasas saturadas, alta fibra");
+    if(dietForm.hipertension) antecedentes.push("Hipertension - dieta DASH, bajo sodio menos de 1500mg/dia");
+    if(dietForm.colesterol) antecedentes.push("Dislipidemia - reducir grasas saturadas, aumentar omega-3 y fibra");
+    if(dietForm.alergias) antecedentes.push("Alergias/intolerancias: "+dietForm.alergias+" - EXCLUIR completamente estos alimentos");
+    if(dietForm.otrosAntecedentes) antecedentes.push("Otros: "+dietForm.otrosAntecedentes);
+    const antStr=antecedentes.length>0?"ANTECEDENTES CRITICOS:\n"+antecedentes.join("\n"):"Sin antecedentes especiales";
+    const prompt=`Eres nutricionista clinico experto. Crea un plan de dieta PERSONALIZADO de lunes a domingo.
+
+PACIENTE: ${profile.sex==="male"?"Hombre":"Mujer"}, ${profile.age} anos, ${profile.weight}kg, ${profile.height}cm
+OBJETIVO: ${profile.goal==="lose"?"Perdida de peso":profile.goal==="gain"?"Ganancia muscular":profile.goal==="recomp"?"Recomposicion":"Mantenimiento"}
+CALORIAS META: ${target} kcal/dia
+${antStr}
+
+INSTRUCCIONES:
+- Adapta CADA comida a los antecedentes del paciente
+- Varia los alimentos cada dia (no repetir el mismo desayuno)
+- Incluye alimentos accesibles en Mexico
+- Especifica porciones exactas (gramos o medidas caseras)
+- Si hay diabetes: todos los alimentos deben ser bajo indice glucemico
+- Si hay enfermedad renal: limita proteina a 0.6-0.8g/kg
+- Excluye ABSOLUTAMENTE cualquier alergia indicada
+
+RESPONDE SOLO JSON:
+{"objetivo":"descripcion personalizada","caloriasDiarias":${target},"distribucionMacros":{"carbs":"Xg","proteina":"Xg","grasas":"Xg"},"restricciones":["restriccion1","restriccion2"],"dias":[{"dia":"Lunes","desayuno":{"descripcion":"alimento con porcion exacta","calorias":X},"almuerzo":{"descripcion":"alimento con porcion exacta","calorias":X},"cena":{"descripcion":"alimento con porcion exacta","calorias":X},"totalDia":X}],"consejos":["consejo1","consejo2","consejo3"]}`;
+    const text=await callClaude("Nutricionista clinico experto. SOLO JSON valido sin texto extra ni backticks.",prompt,2000);
     try{setDietPlan(JSON.parse(text.replace(/```json|```/g,"").trim()));}catch{setDietPlan(null);}
     setPlanLoad(false);
   }
@@ -881,7 +911,26 @@ function Nutrition({profile,meals,setMeals}) {
         ))}
         {view==="plan"&&(
           <>
-            {!dietPlan&&!planLoad&&<Card style={{textAlign:"center",padding:28}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,marginBottom:8}}>Tu plan de alimentación</div><div style={{color:C.muted,fontSize:13,marginBottom:18}}>Plan personalizado de 7 días basado en tu objetivo y metabolismo.</div><PBtn onClick={genDiet}>Generar mi plan</PBtn></Card>}
+            {!dietPlan&&!planLoad&&!dietFormDone&&<Card>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.ink,marginBottom:4}}>Plan de dieta personalizado</div>
+            <div style={{color:C.muted,fontSize:13,marginBottom:16}}>Responde para que la IA adapte tu plan a tus condiciones.</div>
+            <FL>Antecedentes médicos</FL>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+              {[{k:"diabetes",l:"Diabetes mellitus"},{k:"renal",l:"Enfermedad renal"},{k:"hepatic",l:"Enfermedad hepática"},{k:"hipertension",l:"Hipertensión arterial"},{k:"colesterol",l:"Colesterol/Triglicéridos altos"}].map(item=>(
+                <button key={item.k} onClick={()=>setDietForm(f=>({...f,[item.k]:!f[item.k]}))} style={{display:"flex",alignItems:"center",gap:12,background:dietForm[item.k]?C.navy+"15":C.muted2,border:`1.5px solid ${dietForm[item.k]?C.navy:C.border}`,borderRadius:12,padding:"11px 14px",textAlign:"left"}}>
+                  <div style={{width:22,height:22,borderRadius:6,background:dietForm[item.k]?C.navy:C.card,border:`2px solid ${dietForm[item.k]?C.navy:C.ghost}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {dietForm[item.k]&&<span style={{color:"#FFF",fontSize:13,fontWeight:800}}>✓</span>}
+                  </div>
+                  <span style={{fontSize:14,color:C.ink,fontWeight:dietForm[item.k]?700:400}}>{item.l}</span>
+                </button>
+              ))}
+            </div>
+            <FL>Alergias o intolerancias alimentarias</FL>
+            <SI placeholder="ej. mariscos, gluten, lácteos, cacahuate..." value={dietForm.alergias} onChange={e=>setDietForm(f=>({...f,alergias:e.target.value}))} style={{marginBottom:14}}/>
+            <FL>Otros antecedentes relevantes</FL>
+            <SI placeholder="ej. gastritis, hipotiroidismo, embarazo..." value={dietForm.otrosAntecedentes} onChange={e=>setDietForm(f=>({...f,otrosAntecedentes:e.target.value}))} style={{marginBottom:18}}/>
+            <PBtn onClick={()=>{setDietFormDone(true);genDiet();}}>Generar mi plan personalizado →</PBtn>
+          </Card>}
             {planLoad&&<Card style={{textAlign:"center",padding:36}}><Spin/><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.navy}}>Creando tu plan...</div></Card>}
             {dietPlan&&<>
               <Card style={{background:C.navy}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#FFF",marginBottom:6}}>{dietPlan.caloriasDiarias} kcal/día</div><div style={{color:"rgba(255,255,255,0.6)",fontSize:13}}>{dietPlan.objetivo}</div></Card>
