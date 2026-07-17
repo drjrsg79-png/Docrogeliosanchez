@@ -25,7 +25,7 @@ function AppointmentForm({ onBack }) {
     if(!date) return;
     setSlotsLoading(true);
     try {
-      const res = await fetch("/api/appointments?action=get-slots&date="+date);
+      const res = await fetch("/.netlify/functions/appointments?action=get-slots&date="+date);
       const data = await res.json();
       setSlots(data.slots||[]);
       if((data.slots||[]).length===0) setForm(function(f){return Object.assign({},f,{time:""});});
@@ -38,7 +38,7 @@ function AppointmentForm({ onBack }) {
     if(!form.date||!form.time) { alert("Selecciona fecha y hora disponible"); return; }
     setLoading(true);
     try {
-      await fetch("/api/appointments?action=book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
+      await fetch("/.netlify/functions/appointments?action=book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
       setSent(true);
     } catch { alert("Error al enviar. Intenta de nuevo."); }
     setLoading(false);
