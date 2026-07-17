@@ -18,8 +18,24 @@ function AppointmentForm({ onBack }) {
   const [loading, setLoading] = useState(false);
   const reasons = ["Revision pie diabetico","Control de glucosa","Herida en pie","Dolor o entumecimiento","Primera consulta","Seguimiento de tratamiento","Otro motivo"];
 
+  const [slots, setSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
+  async function loadSlots(date) {
+    if(!date) return;
+    setSlotsLoading(true);
+    try {
+      const res = await fetch("/api/appointments?action=get-slots&date="+date);
+      const data = await res.json();
+      setSlots(data.slots||[]);
+      if((data.slots||[]).length===0) setForm(function(f){return Object.assign({},f,{time:""});});
+    } catch {}
+    setSlotsLoading(false);
+  }
+
   async function submit() {
     if(!form.name||!form.phone||!form.reason) { alert("Llena nombre, telefono y motivo"); return; }
+    if(!form.date||!form.time) { alert("Selecciona fecha y hora disponible"); return; }
     setLoading(true);
     try {
       await fetch("/api/appointments?action=book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
@@ -68,16 +84,26 @@ function AppointmentForm({ onBack }) {
             );})}
           </div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          <div>
-            <div style={{fontSize:11,color:"#8C857C",fontWeight:700,marginBottom:6}}>FECHA</div>
-            <input type="date" value={form.date} onChange={function(e){setForm(function(p){return Object.assign({},p,{date:e.target.value});});}} style={{background:"#F0EDE7",border:"1.5px solid rgba(21,46,68,0.10)",borderRadius:12,padding:"13px 12px",color:"#1A1714",fontSize:14,width:"100%",outline:"none"}}/>
-          </div>
-          <div>
-            <div style={{fontSize:11,color:"#8C857C",fontWeight:700,marginBottom:6}}>HORA</div>
-            <input type="time" value={form.time} onChange={function(e){setForm(function(p){return Object.assign({},p,{time:e.target.value});});}} style={{background:"#F0EDE7",border:"1.5px solid rgba(21,46,68,0.10)",borderRadius:12,padding:"13px 12px",color:"#1A1714",fontSize:14,width:"100%",outline:"none"}}/>
-          </div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:"#8C857C",fontWeight:700,textTransform:"uppercase",marginBottom:6}}>Fecha de cita</div>
+          <input type="date" value={form.date} min={new Date().toISOString().slice(0,10)} onChange={function(e){var d=e.target.value;setForm(function(p){return Object.assign({},p,{date:d,time:""});});loadSlots(d);}} style={{background:"#F0EDE7",border:"1.5px solid rgba(21,46,68,0.10)",borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:15,width:"100%",outline:"none"}}/>
         </div>
+        {form.date&&(
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:11,color:"#8C857C",fontWeight:700,textTransform:"uppercase",marginBottom:8}}>Horarios disponibles</div>
+            {slotsLoading&&<div style={{color:"#8C857C",fontSize:13}}>Cargando horarios...</div>}
+            {!slotsLoading&&slots.length===0&&form.date&&<div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"10px 14px",fontSize:13}}>No hay horarios disponibles este dia. Selecciona otra fecha.</div>}
+            {!slotsLoading&&slots.length>0&&(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                {slots.map(function(s){return (
+                  <button key={s} onClick={function(){setForm(function(p){return Object.assign({},p,{time:s});});}} style={{background:form.time===s?"#152E44":"#F0EDE7",color:form.time===s?"#FFF":"#1A1714",border:"1.5px solid "+(form.time===s?"#152E44":"rgba(21,46,68,0.10)"),borderRadius:10,padding:"11px 6px",fontSize:14,fontWeight:form.time===s?700:400}}>
+                    {s}
+                  </button>
+                );})}
+              </div>
+            )}
+          </div>
+        )}
         <button onClick={submit} disabled={loading} style={{background:loading?"#C4BDB5":"#1A5C40",color:"#FFF",border:"none",borderRadius:14,padding:16,fontWeight:700,fontSize:16,width:"100%"}}>
           {loading?"Enviando...":"Solicitar cita "}
         </button>
