@@ -62,9 +62,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   const [blockedDates, setBlockedDates] = useState([]);
   const [newBlock, setNewBlock] = useState({date:"",reason:""});
   const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
-  const [newBlock, setNewBlock] = useState({date:"",reason:""});
   const [apptLoad, setApptLoad] = useState(false);
-  const DAYS = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
 
   const doctorPassword = doctorCode.replace("DR-ROGELIO-", "");
 
