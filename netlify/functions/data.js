@@ -3,6 +3,16 @@ const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED = (process.env.ACCESS_CODES || "").split(",").map(c => c.trim());
 
+async function sendTelegram(text) {
+  try {
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text, parse_mode: "HTML" }),
+    });
+  } catch (e) { console.error("telegram error", e); }
+}
+
 function getSupabase() {
   return createClient(
     process.env.VITE_SUPABASE_URL,
@@ -29,7 +39,7 @@ exports.handler = async (event) => {
   }
 
   const sb = getSupabase();
-  const action = event.path.split("/").pop() || params.action || body.action;
+  const action = params.action || body.action || event.path.split("/").pop();
 
   try {
     // ── LECTURAS (glucosa, presión, peso) ──────────────
@@ -44,6 +54,7 @@ exports.handler = async (event) => {
         read_by_doctor: false,
       }).select().single();
       if (error) throw error;
+    if (!error) { await sendTelegram(`📋 <b>${body.patientName || "Paciente"}</b>\nTipo: ${body.type}\nValor: ${body.value}${body.value2 ? "/" + body.value2 : ""}\nMomento: ${body.moment || ""}`); }
       return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, data }) };
     }
 

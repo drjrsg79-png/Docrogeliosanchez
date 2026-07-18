@@ -272,7 +272,7 @@ function GlucosaScreen({profile,patientCode}) {
   },[diabetesType]);
 
   async function saveReading(type,value,value2,moment,notes) {
-    const res = await apiData("save-reading","POST",{type,value,value2,moment,notes});
+    const res = await apiData("save-reading","POST",{type,value,value2,moment,notes,patientName:profile.name});
     return res.ok;
   }
 
