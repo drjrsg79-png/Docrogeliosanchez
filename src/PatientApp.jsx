@@ -18,10 +18,10 @@ async function callClaude(system, messages, maxTokens = 800) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accessCode: code, system, messages: Array.isArray(messages) ? messages : [{ role:"user", content:messages }], max_tokens: maxTokens }),
     });
-    if (res.status === 401) { return "ERRDEBUG-401: codigo usado=[" + code + "]"; }
-    const data = await res.json(); if(data.error) return "ERRDEBUG: " + JSON.stringify(data);
-    return data.content?.[0]?.text || ("ERRDEBUG-RAW: " + JSON.stringify(data).slice(0,300));
-  } catch(e) { return "ERRDEBUG-CATCH: " + e.message; }
+    if (res.status === 401) { alert("Sesión expirada. Vuelve a ingresar."); return ""; }
+    const data = await res.json();
+    return data.content?.find(b => b.type === "text")?.text || "";
+  } catch { return ""; }
 }
 
 async function apiData(action, method = "GET", body = {}) {
@@ -1346,7 +1346,7 @@ export default function PatientApp({patientCode,onLogout}) {
                     </span>
 </button>
           );
-        })}
+git add -A &&  })}
       </div>
     </div>
   );
