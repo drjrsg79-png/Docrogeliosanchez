@@ -122,7 +122,8 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
     var saved = localStorage.getItem("apex_code");
     if (saved) {
       var upper = saved.toUpperCase();
-      if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper); else if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper);
+      if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper);
+      else if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper);
       else onPatient(upper);
     }
   }, []);
@@ -142,37 +143,50 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
     setLoading(false);
   }
 
+  var FEATURES = [
+    {tag:"GL", t:"Glucosa y presion"},
+    {tag:"RX", t:"Medicamentos"},
+    {tag:"VI", t:"Videollamada"},
+    {tag:"AL", t:"Alimentacion"},
+    {tag:"EJ", t:"Ejercicio"},
+    {tag:"IA", t:"Chat de salud"}
+  ];
+
   return (
-    <div style={{minHeight:"100vh",background:"#F8F5F0",display:"flex",flexDirection:"column"}}>
-      <div style={{background:"linear-gradient(160deg,#080F1A,#152E44,#1E4568)",padding:"60px 28px 40px",textAlign:"center"}}>
-        <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#B8820A,#D4A534)",margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{"\u2695\uFE0F"}</div>
+    <div style={{minHeight:"100vh",background:"#F8F5F0"}}>
+      <div style={{background:"linear-gradient(145deg,#152E44,#1E4568)",padding:"48px 22px 32px",textAlign:"center"}}>
+        <div style={{width:64,height:64,borderRadius:16,background:"rgba(255,255,255,0.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#FFF",margin:"0 auto 16px"}}>RS</div>
         <div style={{fontFamily:"'Playfair Display',serif",fontSize:24,color:"#FFF",fontWeight:800}}>Dr. Rogelio Sanchez</div>
-        <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginTop:6,lineHeight:1.8}}>Medicina Interna | Terapia Intensiva</div>
-        <div style={{color:"rgba(255,255,255,0.55)",fontSize:12}}>Salvamento de Extremidad | Pie Diabetico</div>
+        <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,marginTop:6,lineHeight:1.8}}>Medicina Interna | Terapia Intensiva</div>
+        <div style={{color:"rgba(255,255,255,0.7)",fontSize:12}}>Salvamento de Extremidad | Pie Diabetico</div>
       </div>
+
       <div style={{padding:"20px 20px 0"}}>
         <button onClick={onAppointment} style={{width:"100%",background:"linear-gradient(135deg,#1A5C40,#22C55E)",color:"#FFF",border:"none",borderRadius:18,padding:"20px",marginBottom:16,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}>
-          <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{"\uD83D\uDCC5"}</div>
+          <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>Cita</div>
           <div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:800}}>Solicitar Cita</div>
-            <div style={{fontSize:13,opacity:0.85,marginTop:2}}>Consulta presencial </div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:800}}>Solicitar cita</div>
+            <div style={{fontSize:13,opacity:0.85,marginTop:2}}>Consulta presencial</div>
             <div style={{background:"rgba(255,255,255,0.25)",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,marginTop:6,display:"inline-block"}}>Sin registro necesario</div>
           </div>
         </button>
-        <div style={{background:"#FEF9C3",border:"1px solid #FDE047",borderRadius:12,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#713F12",textAlign:"center",fontWeight:600}}>
-          No debes pisar ni apoyar tu pie en tratamiento hasta que el médico te lo permita
+
+        <div style={{background:"#FEF3C7",border:"1px solid #FDE68A",borderRadius:12,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#78350F",textAlign:"center",fontWeight:600}}>
+          No debes pisar ni apoyar tu pie en tratamiento hasta que el medico te lo permita
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-          {[{icon:"\uD83D\uDCCA",t:"Glucosa y presion"},{icon:"\uD83D\uDC8A",t:"Recordatorios"},{icon:"\uD83D\uDCF9",t:"Videollamada"},{icon:"\uD83E\uDD57",t:"Dieta con IA"},{icon:"\uD83D\uDCAA",t:"Ejercicio"},{icon:"\uD83E\uDD16",t:"Coach IA 24/7"}].map(function(f,i){return (
-            <div key={i} style={{background:"#FFF",borderRadius:12,padding:"10px 12px",boxShadow:"0 2px 12px rgba(21,46,68,0.06)",display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:18}}>{f.icon}</span>
-              <span style={{fontSize:11,color:"#3C3830",fontWeight:500}}>{f.t}</span>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+          {FEATURES.map(function(f,i){return (
+            <div key={i} style={{background:"#FFF",borderRadius:12,padding:"10px 8px",boxShadow:"0 2px 12px rgba(21,46,68,0.06)",display:"flex",flexDirection:"column",alignItems:"center",gap:6,textAlign:"center"}}>
+              <span style={{width:28,height:28,borderRadius:8,background:"#152E440F",color:"#152E44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700}}>{f.tag}</span>
+              <span style={{fontSize:10.5,color:"#3C3830",fontWeight:500,lineHeight:1.3}}>{f.t}</span>
             </div>
           );})}
         </div>
+
         <div style={{background:"#FFF",borderRadius:20,padding:"20px",boxShadow:"0 8px 40px rgba(21,46,68,0.10)"}}>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1A1714",marginBottom:4}}>Plan completo con IA</div>
-          <div style={{color:"#8C857C",fontSize:12,marginBottom:14}}>$300 MXN/mes con codigo de acceso</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1A1714",marginBottom:4}}>Acceso a la app</div>
+          <div style={{fontSize:12,color:"#8C857C",marginBottom:14}}>Ingresa tu codigo de paciente para continuar</div>
           <input placeholder="Codigo APEX-0001" value={input} onChange={function(e){setInput(e.target.value);setError("");}} onKeyDown={function(e){if(e.key==="Enter")handleLogin();}} style={{background:"#F0EDE7",border:"1.5px solid "+(error?"#A02828":"rgba(21,46,68,0.10)"),borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10}}/>
           {error && <div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"8px 14px",fontSize:12,marginBottom:10}}>{error}</div>}
           <button onClick={handleLogin} disabled={loading||!input.trim()} style={{background:loading||!input.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
@@ -184,7 +198,6 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
     </div>
   );
 }
-
 export default function App() {
   const [mode, setMode] = useState(null);
   const [code, setCode] = useState("");
