@@ -122,7 +122,7 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
     var saved = localStorage.getItem("apex_code");
     if (saved) {
       var upper = saved.toUpperCase();
-      if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper); else if (code.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(code);
+      if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper); else if (upper.toUpperCase().startsWith("DR-ROGELIO-")) onDoctor(upper);
       else onPatient(upper);
     }
   }, []);
