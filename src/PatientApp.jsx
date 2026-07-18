@@ -400,7 +400,7 @@ function GlucosaScreen({profile,patientCode}) {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontWeight:600,fontSize:13}}>{st.label}</div>
-                      <div style={{fontSize:11,color:C.muted}}>{{before_breakfast:"Antes de desayuno",after_breakfast:"2h despues de desayuno",before_lunch:"Antes de comida",after_lunch:"2h despues de comida",before_dinner:"Antes de cena",after_dinner:"2h despues de cenar",random:"Aleatoria"}[r.type]||r.type} · {r.date} {r.time}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{{before_breakfast:"Antes de desayuno",after_breakfast:"2h despues de desayuno",before_lunch:"Antes de comida",after_lunch:"2h despues de comida",before_dinner:"Antes de cena",after_dinner:"2h despues de cenar",random:"Aleatoria"}[r.type]||r.type} · {r.date||(r.created_at?new Date(r.created_at).toLocaleDateString("es-MX"):"")} {r.time||(r.created_at?new Date(r.created_at).toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}):"")}</div>
                     </div>
                   </div>
                 );})}
