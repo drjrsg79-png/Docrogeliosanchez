@@ -20,7 +20,7 @@ async function callClaude(system, messages, maxTokens = 800) {
     });
     if (res.status === 401) { return "ERRDEBUG-401: codigo usado=[" + code + "]"; }
     const data = await res.json(); if(data.error) return "ERRDEBUG: " + JSON.stringify(data);
-    return data.content?.[0]?.text || "";
+    return data.content?.[0]?.text || ("ERRDEBUG-RAW: " + JSON.stringify(data).slice(0,300));
   } catch(e) { return "ERRDEBUG-CATCH: " + e.message; }
 }
 
