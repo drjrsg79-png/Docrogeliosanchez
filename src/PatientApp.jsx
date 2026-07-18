@@ -1346,7 +1346,7 @@ export default function PatientApp({patientCode,onLogout}) {
                     </span>
 </button>
           );
-git add -A &&  })}
+          })}
       </div>
     </div>
   );
