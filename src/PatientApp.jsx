@@ -19,7 +19,7 @@ async function callClaude(system, messages, maxTokens = 800) {
       body: JSON.stringify({ accessCode: code, system, messages: Array.isArray(messages) ? messages : [{ role:"user", content:messages }], max_tokens: maxTokens }),
     });
     if (res.status === 401) { alert("Sesión expirada. Vuelve a ingresar."); return ""; }
-    const data = await res.json();
+    const data = await res.json(); if(data.error) alert("ERROR API: " + data.error);
     return data.content?.[0]?.text || "";
   } catch { return ""; }
 }
