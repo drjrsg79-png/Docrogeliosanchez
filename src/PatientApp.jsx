@@ -18,10 +18,10 @@ async function callClaude(system, messages, maxTokens = 800) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accessCode: code, system, messages: Array.isArray(messages) ? messages : [{ role:"user", content:messages }], max_tokens: maxTokens }),
     });
-    if (res.status === 401) { alert("Sesión expirada. Vuelve a ingresar."); return ""; }
-    const data = await res.json(); if(data.error) alert("ERROR API: " + data.error);
+    if (res.status === 401) { return "ERRDEBUG-401: codigo usado=[" + code + "]"; }
+    const data = await res.json(); if(data.error) return "ERRDEBUG: " + JSON.stringify(data);
     return data.content?.[0]?.text || "";
-  } catch(e) { alert("CATCH ERROR: " + e.message); return ""; }
+  } catch(e) { return "ERRDEBUG-CATCH: " + e.message; }
 }
 
 async function apiData(action, method = "GET", body = {}) {
