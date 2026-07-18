@@ -51,7 +51,7 @@ function today(){ return new Date().toISOString().slice(0,10); }
 function nowTime(){ return new Date().toTimeString().slice(0,5); }
 function glStatus(v,type="general"){
   if(v<70) return {label:"Hipoglucemia",color:"#7C3AED",bg:"#EDE9FE"};
-  if(type==="fasting"){ if(v<=99) return {label:"Normal",color:C.emerald,bg:"#D1FAE5"}; if(v<=125) return {label:"Prediabetes",color:C.amber,bg:"#FEF3C7"}; return {label:"Diabetes",color:C.scarlet,bg:"#FEE2E2"}; }
+  if(type==="fasting"||(typeof type==="string"&&type.startsWith("before_"))){ if(v<=99) return {label:"Normal",color:C.emerald,bg:"#D1FAE5"}; if(v<=125) return {label:"Prediabetes",color:C.amber,bg:"#FEF3C7"}; return {label:"Diabetes",color:C.scarlet,bg:"#FEE2E2"}; }
   if(v<=139) return {label:"Normal",color:C.emerald,bg:"#D1FAE5"}; if(v<=179) return {label:"Elevada",color:C.amber,bg:"#FEF3C7"}; return {label:"Alta",color:C.scarlet,bg:"#FEE2E2"};
 }
 
@@ -400,7 +400,7 @@ function GlucosaScreen({profile,patientCode}) {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontWeight:600,fontSize:13}}>{st.label}</div>
-                      <div style={{fontSize:11,color:C.muted}}>{{fasting:"Ayuno",post_meal:"Postprandial",bedtime:"Antes dormir",random:"Aleatoria"}[r.type]||r.type} · {r.date} {r.time}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{{before_breakfast:"Antes de desayuno",after_breakfast:"2h despues de desayuno",before_lunch:"Antes de comida",after_lunch:"2h despues de comida",before_dinner:"Antes de cena",after_dinner:"2h despues de cenar",random:"Aleatoria"}[r.type]||r.type} · {r.date} {r.time}</div>
                     </div>
                   </div>
                 );})}
@@ -467,7 +467,7 @@ function GlucosaScreen({profile,patientCode}) {
             </div>
             {addModal==="glucose"&&<>
               <FL>Tipo de medición</FL>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>{[{v:"fasting",l:"Ayuno"},{v:"post_meal",l:"Postprandial"},{v:"bedtime",l:"Antes dormir"},{v:"random",l:"Aleatoria"}].map(t=><Chip key={t.v} onClick={()=>setGForm(f=>({...f,type:t.v}))} active={gForm.type===t.v} color={C.emerald}>{t.l}</Chip>)}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>{[{v:"before_breakfast",l:"Antes de desayuno"},{v:"after_breakfast",l:"2h despues de desayuno"},{v:"before_lunch",l:"Antes de comida"},{v:"after_lunch",l:"2h despues de comida"},{v:"before_dinner",l:"Antes de cena"},{v:"after_dinner",l:"2h despues de cenar"},{v:"random",l:"Aleatoria"}].map(t=><Chip key={t.v} onClick={()=>setGForm(f=>({...f,type:t.v}))} active={gForm.type===t.v} color={C.emerald}>{t.l}</Chip>)}</div>
               <FL>Glucosa (mg/dL)</FL>
               <SI type="number" placeholder="ej. 95" value={gForm.value} onChange={e=>setGForm(f=>({...f,value:e.target.value}))} style={{fontSize:22,fontWeight:800,color:C.emerald,marginBottom:14}}/>
               {gForm.value&&<div style={{marginBottom:14,padding:"10px 14px",borderRadius:12,background:glStatus(+gForm.value,gForm.type).bg}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:800,color:glStatus(+gForm.value,gForm.type).color}}>{gForm.value} mg/dL — {glStatus(+gForm.value,gForm.type).label}</div></div>}
