@@ -265,7 +265,7 @@ function GlucosaScreen({profile,patientCode}) {
 
   // Load readings from server
   useEffect(()=>{
-    if(!diabetesType) return;
+    // carga siempre, sin depender de diabetesType
     apiData("get-readings","GET").then(res=>{
       if(res.ok) setGlucoseLog((res.data||[]).filter(r=>r.type==="glucose"));
     });
