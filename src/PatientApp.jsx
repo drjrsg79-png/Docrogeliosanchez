@@ -184,71 +184,62 @@ function Setup({onComplete}) {
 // ══════════════════════════════════════════════════════
 // SCREEN: DASHBOARD
 // ══════════════════════════════════════════════════════
-function Dashboard({profile,meals,exerciseLog}) {
-  const tdee=calcTDEE(profile),target=goalCals(tdee,profile.goal);
-  const consumed=Object.values(meals).flat().reduce((s,f)=>s+(f.cals||0),0);
-  const burned=exerciseLog.reduce((s,e)=>s+e.burned,0);
-  const net=consumed-burned,remaining=target-net,ringPct=pct(net,target);
-  const w=parseFloat(profile.weight)||0,h=parseFloat(profile.height)||0;
-  const bmi=(w>0&&h>0)?(w/(h/100)**2).toFixed(1):"—";
-  const goalLabel={lose:"Pérdida de Peso",gain:"Ganancia Muscular",recomp:"Recomposición",maintain:"Mantenimiento"};
-  const macroT={carbs:Math.round(target*0.45/4),prot:Math.round(target*0.30/4),fat:Math.round(target*0.25/9)};
-  const macroE=Object.values(meals).flat().reduce((s,f)=>({carbs:s.carbs+(f.carbs||0),prot:s.prot+(f.prot||0),fat:s.fat+(f.fat||0)}),{carbs:0,prot:0,fat:0});
+function Dashboard({profile,meals,exerciseLog,setTab}){
+  const firstName=(profile?.name||"").split(" ")[0]||"";
+  const TIPS=[
+    "Revisa tus pies todos los dias buscando cortes, ampollas o cambios de color.",
+    "Usa calzado cerrado y comodo, nunca camines descalzo.",
+    "Seca bien entre los dedos despues de banarte para evitar hongos.",
+    "Hidrata la piel de tus pies, pero no entre los dedos.",
+    "Corta las unas en linea recta para evitar unas encarnadas."
+  ];
+  const tip=TIPS[new Date().getDate()%TIPS.length];
+
+  const Section=({title,desc,tag,onClick})=>(
+    <Card style={{cursor:"pointer"}}>
+      <div onClick={onClick} style={{display:"flex",alignItems:"flex-start",gap:14}}>
+        <div style={{width:44,height:44,borderRadius:12,background:C.navy+"0F",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:C.navy,fontWeight:700,fontSize:13,letterSpacing:0.5}}>{tag}</div>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:700,fontSize:15,color:C.ink,marginBottom:2}}>{title}</div>
+          <div style={{fontSize:13,color:C.muted,lineHeight:1.4}}>{desc}</div>
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <div style={{paddingBottom:110}}>
-      <div style={{background:`linear-gradient(145deg,${C.navy},${C.navyMid})`,padding:"56px 22px 28px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}/>
-        <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Bienvenido</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:24,color:"#FFF",fontWeight:800,marginBottom:8}}>{profile.name}</div>
-        <Badge color={C.gold}>{goalLabel[profile.goal]}</Badge>
+      <div style={{background:`linear-gradient(145deg,${C.navy},${C.navyMid})`,padding:"48px 22px 28px",position:"relative",overflow:"hidden"}}>
+        <div style={{color:"#fff",fontSize:13,opacity:0.8,fontWeight:600,letterSpacing:0.5}}>BIENVENIDO</div>
+        <div style={{color:"#fff",fontSize:24,fontWeight:700,marginTop:4}}>{firstName?`Hola, ${firstName}`:"Hola"}</div>
+        <div style={{color:"#fff",opacity:0.85,fontSize:13,marginTop:6,lineHeight:1.4}}>Este es tu espacio para cuidar tu salud y tus pies. Aqui encuentras todo lo que necesitas para tu tratamiento.</div>
       </div>
-      <div style={{padding:"0 16px"}}>
-        <Card style={{marginTop:-20,boxShadow:"0 16px 56px rgba(21,46,68,0.14)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:20}}>
-            <div style={{position:"relative",width:120,height:120,flexShrink:0}}>
-              <svg viewBox="0 0 120 120" style={{position:"absolute",inset:0,width:"100%",height:"100%",transform:"rotate(-90deg)"}}>
-                <circle cx="60" cy="60" r="52" fill="none" stroke={C.deep} strokeWidth="11"/>
-                <circle cx="60" cy="60" r="52" fill="none" stroke={remaining<0?C.scarlet:C.navy} strokeWidth="11" strokeLinecap="round" strokeDasharray={String(2*Math.PI*52)} strokeDashoffset={String(2*Math.PI*52*(1-ringPct/100))}/>
-              </svg>
-              <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center"}}>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:800,color:remaining<0?C.scarlet:C.navy,lineHeight:1}}>{Math.abs(remaining)}</div>
-                <div style={{fontSize:10,color:C.muted}}>{remaining>=0?"restante":"excedido"}</div>
-              </div>
-            </div>
-            <div style={{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              {[{l:"Meta",v:target,c:C.navy},{l:"Consumido",v:consumed,c:C.gold},{l:"Quemado",v:burned,c:C.emerald},{l:"Neto",v:net,c:net>target?C.scarlet:C.navyMid}].map(it=>(
-                <div key={it.l}><div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase"}}>{it.l}</div><div style={{fontSize:18,fontWeight:800,color:it.c}}>{it.v}<span style={{fontSize:11,color:C.ghost}}> kcal</span></div></div>
-              ))}
-            </div>
+
+      <div style={{padding:"0 16px",marginTop:-16}}>
+        <Card style={{background:C.cobalt+"12",border:`1px solid ${C.cobalt}30`}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.cobalt,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Consejo de cuidado del pie</div>
+          <div style={{fontSize:14,color:C.ink,lineHeight:1.5}}>{tip}</div>
+        </Card>
+
+        <div style={{fontSize:13,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:0.5,margin:"20px 0 10px 4px"}}>Tu dia a dia</div>
+
+        <Section title="Registrar glucosa y presion" desc="Anota tus mediciones para que el Dr. Rogelio pueda dar seguimiento a tu control." tag="GL" onClick={()=>setTab(1)}/>
+        <Section title="Medicamentos y recordatorios" desc="Consulta tus dosis indicadas y activa recordatorios para no olvidar ninguna toma." tag="RX" onClick={()=>setTab(2)}/>
+        <Section title="Alimentacion para diabetes" desc="Recomendaciones y plan de comidas pensado para el control de tu glucosa." tag="AL" onClick={()=>setTab(4)}/>
+        <Section title="Ejercicios de rehabilitacion" desc="Rutinas seguras para fortalecer y proteger tus pies durante la recuperacion." tag="EJ" onClick={()=>setTab(5)}/>
+        <Section title="Chat con tu asistente de salud" desc="Resuelve dudas sobre tu tratamiento las 24 horas, todos los dias." tag="IA" onClick={()=>setTab(6)}/>
+
+        <div style={{fontSize:13,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:0.5,margin:"20px 0 10px 4px"}}>Recuerda</div>
+        <Card>
+          <div style={{fontSize:13,color:C.ink,lineHeight:1.6}}>
+            Esta app es un apoyo para tu tratamiento y no sustituye la valoracion de tu medico. Ante cualquier herida, enrojecimiento o dolor en el pie que empeore, contacta a la clinica de inmediato.
           </div>
         </Card>
-        <Card>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:C.ink,marginBottom:14}}>Macronutrientes</div>
-          {[{l:"Carbohidratos",e:macroE.carbs,t:macroT.carbs,c:C.navy},{l:"Proteína",e:macroE.prot,t:macroT.prot,c:C.gold},{l:"Grasas",e:macroE.fat,t:macroT.fat,c:C.emerald}].map(m=>(
-            <div key={m.l} style={{marginBottom:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}><span style={{fontWeight:600,color:C.inkSec}}>{m.l}</span><span style={{color:C.muted}}><span style={{color:m.c,fontWeight:700}}>{m.e}</span> / {m.t}g</span></div>
-              <div style={{height:5,background:C.deep,borderRadius:3,overflow:"hidden",marginTop:5}}><div style={{height:"100%",width:`${pct(m.e,m.t)}%`,background:m.c,borderRadius:3,transition:"width 0.6s"}}/></div>
-            </div>
-          ))}
-        </Card>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
-          {[{l:"Peso",v:w>0?`${w}kg`:"— kg",c:C.cobalt},{l:"IMC",v:bmi,c:bmi==="—"?C.muted:+bmi>25?C.scarlet:C.emerald},{l:"TDEE",v:`${tdee}`,c:C.navy}].map(s=>(
-            <div key={s.l} style={{background:C.card,borderRadius:16,padding:"14px 12px",boxShadow:C.shadow,textAlign:"center"}}>
-              <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>{s.l}</div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:800,color:s.c}}>{s.v}</div>
-            </div>
-          ))}
-        </div>
-        {exerciseLog.length>0&&<Card><div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:C.ink,marginBottom:12}}>Ejercicio Hoy</div>{exerciseLog.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderTop:i>0?`1px solid ${C.border}`:"none"}}><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{e.name}</div><div style={{color:C.muted,fontSize:12}}>{e.mins} min</div></div><div style={{background:C.scarlet+"15",borderRadius:10,padding:"4px 10px",color:C.scarlet,fontWeight:700,fontSize:14}}>-{e.burned} kcal</div></div>)}</Card>}
       </div>
     </div>
   );
 }
 
-
-// ══════════════════════════════════════════════════════
-// SCREEN: GLUCOSA (con sync a Supabase)
-// ══════════════════════════════════════════════════════
 function GlucosaScreen({profile,patientCode}) {
   const [diabetesType,setDiabetesType]=useState(()=>localStorage.getItem("apex_diabType")||null);
   const [glucoseLog,setGlucoseLog]=useState([]);
@@ -1308,7 +1299,7 @@ export default function PatientApp({patientCode,onLogout}) {
   if(!profile) return <Setup onComplete={saveProfile}/>;
 
   const screens=[
-    <Dashboard profile={profile} meals={meals} exerciseLog={exerciseLog}/>,
+    <Dashboard profile={profile} meals={meals} exerciseLog={exerciseLog} setTab={setTab}/>,
     <GlucosaScreen profile={profile} patientCode={patientCode}/>,
     <Recordatorios patientCode={patientCode}/>,
     <VideoScreen patientCode={patientCode} profile={profile}/>,
