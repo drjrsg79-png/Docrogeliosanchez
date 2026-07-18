@@ -21,7 +21,7 @@ async function callClaude(system, messages, maxTokens = 800) {
     if (res.status === 401) { alert("Sesión expirada. Vuelve a ingresar."); return ""; }
     const data = await res.json(); if(data.error) alert("ERROR API: " + data.error);
     return data.content?.[0]?.text || "";
-  } catch { return ""; }
+  } catch(e) { alert("CATCH ERROR: " + e.message); return ""; }
 }
 
 async function apiData(action, method = "GET", body = {}) {
