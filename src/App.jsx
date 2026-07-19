@@ -229,7 +229,7 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
                       <div style={{marginTop:10,background:"#E8F5E9",border:"1px solid #A5D6A7",borderRadius:12,padding:16,textAlign:"center"}}>
                         <div style={{fontSize:12,color:"#2E7D32",marginBottom:6}}>Tu código de acceso es:</div>
                         <div style={{fontSize:20,fontWeight:800,color:"#152E44",letterSpacing:1}}>{regResult}</div>
-                        <div style={{fontSize:11,color:"#2E7D32",marginTop:8}}>Guárdalo — lo necesitas para entrar la próxima vez</div>
+                        <div style={{fontSize:11,color:"#2E7D32",marginTop:8}}>Guárdalo — lo necesitas para entrar la próxima vez</div><button onClick={()=>{setCode(regResult);localStorage.setItem("apex_code",regResult);setMode("patient");}} style={{background:"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%",marginTop:14,cursor:"pointer"}}>Entrar ahora</button>
                       </div>
                     )}
         </div>
