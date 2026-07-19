@@ -76,7 +76,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
         // Alert for new call requests
         const pending = (data.pendingCalls || []).length;
         if (pending > lastPendingCount && lastPendingCount !== null) {
-          if (Notification.permission === "granted" && pending > 0) {
+          if (typeof Notification !== "undefined" && Notification.permission === "granted" && pending > 0) {
             new Notification("📹 Videollamada entrante", { body: `${data.pendingCalls[0]?.patient_name} está esperando.`, icon: "/icon-192.png" });
           }
         }
@@ -89,7 +89,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   useEffect(() => {
     fetchDashboard();
     const interval = setInterval(fetchDashboard, 30000); // refresh each 30s
-    Notification.requestPermission();
+    if (typeof Notification !== "undefined") Notification.requestPermission();
     fetch("/.netlify/functions/appointments?action=list&doctorPassword="+doctorPassword).then(r=>r.json()).then(d=>{if(d.ok)setAppointments(d.data||[]);});
     fetch("/.netlify/functions/appointments?action=get-availability").then(r=>r.json()).then(d=>{if(d.ok){setAvailability(d.availability||[]);setBlockedDates(d.blocked||[]);}});
     fetchAppointments();
