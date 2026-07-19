@@ -1331,7 +1331,7 @@ export default function PatientApp({patientCode,onLogout}) {
     setProfile(p);
   }
 
-  if(!profile) return <Setup onComplete={saveProfile}/>;
+  if(!profile||!profile.weight||!profile.height) return <Setup onComplete={saveProfile}/>;
 
   const screens=[
     <Dashboard profile={profile} meals={meals} exerciseLog={exerciseLog} setTab={setTab}/>,
