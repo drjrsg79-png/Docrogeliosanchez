@@ -1320,13 +1320,14 @@ export default function PatientApp({patientCode,onLogout}) {
   }, [patientCode]);
 
   const [profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_profile")||"null");}catch{return null;}});
+  useEffect(()=>{apiData("get-profile","GET").then(r=>{if(r.ok&&r.profile){setProfile(r.profile);localStorage.setItem("apex_profile",JSON.stringify(r.profile));}});},[]);
   const [tab,setTab]=useState(0);
   const [meals,setMeals]=useState({breakfast:[],lunch:[],dinner:[],snacks:[]});
   const [exerciseLog,setExerciseLog]=useState([]);
   const [workoutPlan,setWorkoutPlan]=useState(null);
 
   function saveProfile(p){
-    localStorage.setItem("apex_profile",JSON.stringify(p));
+    localStorage.setItem("apex_profile",JSON.stringify(p));apiData("save-profile","POST",{profile:p}).catch(()=>{});
     setProfile(p);
   }
 
