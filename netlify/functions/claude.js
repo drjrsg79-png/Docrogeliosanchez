@@ -1,3 +1,5 @@
+const { createClient } = require("@supabase/supabase-js");
+function getSupabase(){ return createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); }
 const ALLOWED = (process.env.ACCESS_CODES || "").split(",").map(c => c.trim());
 const DOCTOR_PW = process.env.DOCTOR_PASSWORD || "";
 const H = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"Content-Type","Content-Type":"application/json"};
@@ -10,7 +12,8 @@ exports.handler = async (event) => {
   const code = (body.accessCode||"").trim();
   const drCode = "DR-ROGELIO-"+DOCTOR_PW;
   const isDr = code === drCode;
-  const isPt = ALLOWED.includes(code);
+  let isPt = ALLOWED.includes(code);
+  if (!isPt) { try { const sb = getSupabase(); const { data: pt } = await sb.from("patients").select("code,active").eq("code", code).maybeSingle(); if (pt && pt.active) isPt = true; } catch (e) {} }
   if(!isDr && !isPt){
     return {statusCode:401,headers:H,body:JSON.stringify({error:"Codigo invalido o suscripcion vencida."})};
   }
