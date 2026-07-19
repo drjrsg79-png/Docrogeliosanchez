@@ -24,6 +24,9 @@ function validateDoctor(event) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: HEADERS, body: "" };
+  const params = event.queryStringParameters || {};
+  const body = event.httpMethod !== "GET" ? JSON.parse(event.body || "{}") : {};
+  const action = params.action || body.action;
   if (action === "self-register" && event.httpMethod === "POST") {
     const sb = getSupabase();
     const { data: existing } = await sb.from("patients").select("code").order("code", { ascending: false }).limit(1);
@@ -42,9 +45,6 @@ exports.handler = async (event) => {
   }
 
   const sb = getSupabase();
-  const params = event.queryStringParameters || {};
-  const body = event.httpMethod !== "GET" ? JSON.parse(event.body || "{}") : {};
-  const action = params.action || body.action;
 
   try {
     // ── Dashboard principal: últimas lecturas de todos los pacientes ──
