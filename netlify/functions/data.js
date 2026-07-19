@@ -87,6 +87,10 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, data }) };
     }
 
+  if (action === "save-profile" && event.httpMethod === "POST") { const { error } = await sb.from("patients").update({ profile: body.profile }).eq("code", code); if (error) throw error; return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true }) }; }
+
+  if (action === "get-profile" && event.httpMethod === "GET") { const { data, error } = await sb.from("patients").select("profile").eq("code", code).maybeSingle(); if (error) throw error; return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, profile: data ? data.profile : null }) }; }
+
     // ── SOLICITAR VIDEOLLAMADA ─────────────────────────
     if (action === "request-call" && event.httpMethod === "POST") {
       // Cancelar solicitudes previas del mismo paciente
