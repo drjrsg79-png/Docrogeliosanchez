@@ -24,6 +24,19 @@ function validateDoctor(event) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: HEADERS, body: "" };
+  if (action === "self-register" && event.httpMethod === "POST") {
+    const sb = getSupabase();
+    const { data: existing } = await sb.from("patients").select("code").order("code", { ascending: false }).limit(1);
+    let nextNum = 1;
+    if (existing && existing.length > 0) {
+      const m = existing[0].code.match(/APEX-(\d+)/);
+      if (m) nextNum = parseInt(m[1], 10) + 1;
+    }
+    const newCode = `APEX-${String(nextNum).padStart(4, "0")}`;
+    const { data, error } = await sb.from("patients").insert({ code: newCode, name: body.name, active: true, notes: body.notes || "" }).select().single();
+    if (error) throw error;
+    return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, code: newCode, data }) };
+  }
   if (!validateDoctor(event)) {
     return { statusCode: 401, headers: HEADERS, body: JSON.stringify({ error: "Acceso no autorizado" }) };
   }

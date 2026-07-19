@@ -117,6 +117,23 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [regName, setRegName] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+  const [regResult, setRegResult] = useState(null);
+  const [regError, setRegError] = useState("");
+
+  async function handleRegister() {
+    if (!regName.trim()) return;
+    setRegLoading(true); setRegError("");
+    try {
+      const res = await fetch("/api/doctor?action=self-register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: regName.trim() }) });
+      const d = await res.json();
+      if (d.ok) { setRegResult(d.code); }
+      else { setRegError("No se pudo generar tu código. Intenta de nuevo."); }
+    } catch (e) { setRegError("Error de conexión. Intenta de nuevo."); }
+    setRegLoading(false);
+  }
 
   useEffect(function() {
     var saved = localStorage.getItem("apex_code");
@@ -192,6 +209,25 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
           <button onClick={handleLogin} disabled={loading||!input.trim()} style={{background:loading||!input.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
             {loading?"Verificando...":"Ingresar"}
           </button>
+                    <button onClick={()=>setShowRegister(!showRegister)} style={{background:"transparent",border:"none",color:"#152E44",fontSize:12,fontWeight:600,textDecoration:"underline",marginTop:14,width:"100%",cursor:"pointer"}}>
+                      {showRegister?"Cancelar registro":"¿Eres nuevo? Regístrate aquí"}
+                    </button>
+                    {showRegister && !regResult && (
+                      <div style={{marginTop:10}}>
+                        <input value={regName} onChange={e=>setRegName(e.target.value)} placeholder="Tu nombre completo" style={{background:"#F0EDE7",border:"1.5px solid rgba(21,46,68,0.10)",borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10}} />
+                        {regError && <div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"8px 14px",fontSize:12,marginBottom:10}}>{regError}</div>}
+                        <button onClick={handleRegister} disabled={regLoading||!regName.trim()} style={{background:regLoading||!regName.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
+                          {regLoading?"Creando...":"Crear mi cuenta"}
+                        </button>
+                      </div>
+                    )}
+                    {regResult && (
+                      <div style={{marginTop:10,background:"#E8F5E9",border:"1px solid #A5D6A7",borderRadius:12,padding:16,textAlign:"center"}}>
+                        <div style={{fontSize:12,color:"#2E7D32",marginBottom:6}}>Tu código de acceso es:</div>
+                        <div style={{fontSize:20,fontWeight:800,color:"#152E44",letterSpacing:1}}>{regResult}</div>
+                        <div style={{fontSize:11,color:"#2E7D32",marginTop:8}}>Guárdalo — lo necesitas para entrar la próxima vez</div>
+                      </div>
+                    )}
         </div>
         <div style={{textAlign:"center",marginTop:16,fontSize:11,color:"#C4BDB5",paddingBottom:32}}>appDrRogelioSanchez 2025</div>
       </div>
