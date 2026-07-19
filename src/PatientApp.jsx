@@ -843,7 +843,7 @@ function Nutrition({profile,meals,setMeals}) {
   }
 
   const [dietForm,setDietForm]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_dietform"))||{diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}catch{return {diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}});
-  const [dietFormDone,setDietFormDone]=useState(()=>!!localStorage.getItem("apex_dietform"));const [dietError,setDietError]=useState(null);
+  const [dietFormDone,setDietFormDone]=useState(()=>!!localStorage.getItem("apex_dietform"));const [dietError,setDietError]=useState(null);useEffect(()=>{if(dietFormDone&&!dietPlan&&!planLoad){genDiet();}},[dietFormDone]);
 
   async function genDiet(){
     setPlanLoad(true);
