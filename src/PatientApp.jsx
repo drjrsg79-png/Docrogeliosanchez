@@ -843,7 +843,7 @@ function Nutrition({profile,meals,setMeals}) {
   }
 
   const [dietForm,setDietForm]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_dietform"))||{diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}catch{return {diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}});
-  const [dietFormDone,setDietFormDone]=useState(()=>!!localStorage.getItem("apex_dietform"));
+  const [dietFormDone,setDietFormDone]=useState(()=>!!localStorage.getItem("apex_dietform"));const [dietError,setDietError]=useState(null);
 
   async function genDiet(){
     setPlanLoad(true);
@@ -876,7 +876,7 @@ INSTRUCCIONES:
 RESPONDE SOLO JSON:
 {"objetivo":"descripcion personalizada","caloriasDiarias":${target},"distribucionMacros":{"carbs":"Xg","proteina":"Xg","grasas":"Xg"},"restricciones":["restriccion1","restriccion2"],"dias":[{"dia":"Lunes","desayuno":{"descripcion":"alimento con porcion exacta","calorias":X},"almuerzo":{"descripcion":"alimento con porcion exacta","calorias":X},"cena":{"descripcion":"alimento con porcion exacta","calorias":X},"totalDia":X}],"consejos":["consejo1","consejo2","consejo3"]}`;
     const text=await callClaude("Nutricionista clinico experto. SOLO JSON valido sin texto extra ni backticks.",prompt,2000);
-    try{setDietPlan(JSON.parse(text.replace(/```json|```/g,"").trim()));}catch{setDietPlan(null);}
+  try{setDietPlan(JSON.parse(text.replace(/```json|```/g,"").trim()));}catch{setDietPlan(null);setDietError(text.slice(0,400)||"vacio");}
     setPlanLoad(false);
   }
 
@@ -902,7 +902,7 @@ RESPONDE SOLO JSON:
         ))}
         {view==="plan"&&(
           <>
-            {!dietPlan&&!planLoad&&!dietFormDone&&<Card>
+            {dietError&&<Card><div style={{color:"red",fontSize:12,whiteSpace:"pre-wrap"}}>{dietError}</div></Card>}{!dietPlan&&!planLoad&&!dietFormDone&&<Card>
             <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.ink,marginBottom:4}}>Plan de dieta personalizado</div>
             <div style={{color:C.muted,fontSize:13,marginBottom:16}}>Responde para que la IA adapte tu plan a tus condiciones.</div>
             <FL>Antecedentes médicos</FL>
