@@ -59,6 +59,23 @@ self.addEventListener('message', event => {
 });
 
 // ── Acciones al tocar notificación ──
+// -- Push notifications reales (funcionan con la app cerrada) --
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e) { data = { title: 'Dr. Rogelio Sanchez', body: event.data ? event.data.text() : '' }; }
+  const title = data.title || 'Dr. Rogelio Sanchez';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.tag || `push-${Date.now()}`,
+    requireInteraction: true,
+    data: { url: data.url || '/' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   if (event.action === 'done' || !event.action) {

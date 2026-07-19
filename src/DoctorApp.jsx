@@ -55,6 +55,7 @@ export default function DoctorApp({ doctorCode, onLogout }) {
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [newPat, setNewPat] = useState({ code: "", name: "", notes: "" });
   const [noteInput, setNoteInput] = useState("");
+  const [reminderInput, setReminderInput] = useState("");
   const [callActive, setCallActive] = useState(null); // {room_name, patient_name, id}
   const [lastPendingCount, setLastPendingCount] = useState(0);
   const [appointments, setAppointments] = useState([]);
@@ -184,6 +185,17 @@ export default function DoctorApp({ doctorCode, onLogout }) {
     });
     setNoteInput("");
     alert("Nota guardada.");
+  }
+
+  async function sendReminder() {
+    if (!selPatient) return;
+    await fetch("/api/push-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doctorPassword, patientCode: selPatient.code, title: "Recordatorio del Dr. Rogelio", body: reminderInput || "Tienes un recordatorio pendiente." }),
+    });
+    setReminderInput("");
+    alert("Recordatorio enviado.");
   }
 
   async function answerCall(call) {
@@ -388,6 +400,10 @@ export default function DoctorApp({ doctorCode, onLogout }) {
                       <button onClick={addNote} disabled={!noteInput.trim()} style={{ background: !noteInput.trim() ? "rgba(255,255,255,0.1)" : C.gold, color: !noteInput.trim() ? C.muted : "#000", border: "none", borderRadius: 12, padding: "12px 20px", fontWeight: 700, fontSize: 14, width: "100%" }}>
                         Guardar nota
                       </button>
+                        <textarea value={reminderInput} onChange={e=>setReminderInput(e.target.value)} placeholder="Mensaje del recordatorio..." style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.text, fontSize: 13, width: "100%", height: 80, resize: "none", outline: "none", marginTop: 14, marginBottom: 10 }} />
+                        <button onClick={sendReminder} disabled={!reminderInput.trim()} style={{ background: !reminderInput.trim() ? "rgba(255,255,255,0.1)" : C.gold, color: !reminderInput.trim() ? C.muted : "#000", border: "none", borderRadius: 12, padding: "12px 20px", fontWeight: 700, fontSize: 14, width: "100%" }}>
+                          Enviar recordatorio
+                        </button>
                     </div>
                   </div>
                 </div>

@@ -85,7 +85,7 @@ function useNotifications(reminders) {
         if (!r.active) return;
         (r.times || []).forEach(rt => {
           if (rt === t) {
-            if (Notification.permission === "granted") {
+            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
               new Notification(`⏰ ${r.title}`, { body: r.body, icon: "/icon-192.png" });
             }
             // Also send to SW
@@ -492,7 +492,7 @@ function Recordatorios({patientCode}) {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); } catch { return []; }
   });
   const [modal,setModal] = useState(false);
-  const [notifGranted,setNotifGranted] = useState(Notification.permission==="granted");
+  const [notifGranted,setNotifGranted] = useState(typeof Notification !== "undefined" && Notification.permission==="granted");
   const [form,setForm] = useState({title:"",body:"",type:"med",times:["08:00"],active:true});
 
   useNotifications(reminders);
@@ -519,7 +519,7 @@ function Recordatorios({patientCode}) {
   }
 
   async function requestNotif() {
-    const perm = await Notification.requestPermission();
+    if (typeof Notification === "undefined") return; const perm = await Notification.requestPermission();
     setNotifGranted(perm==="granted");
   }
 
@@ -1285,6 +1285,40 @@ const NAV=[
 ];
 
 export default function PatientApp({patientCode,onLogout}) {
+  useEffect(function() {
+    if (!patientCode) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    var VAPID_PUBLIC_KEY = "BC5rW_ZryFDUbAcVel0cGWu6VWcv9EmP0ppMS9qFhUv12v6Mkkgzu0exa9LOUwi3TuEnpNIZpiNud2WhADxvXd8";
+    function urlBase64ToUint8Array(base64String) {
+      var padding = '='.repeat((4 - base64String.length % 4) % 4);
+      var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      var rawData = window.atob(base64);
+      var outputArray = new Uint8Array(rawData.length);
+      for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+    navigator.serviceWorker.ready.then(function(reg) {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") { Notification.requestPermission(); }
+      if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+      reg.pushManager.getSubscription().then(function(existing) {
+        function send(sub) {
+          fetch("/api/push-subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ patientCode: patientCode, subscription: sub })
+          }).catch(function(){});
+        }
+        if (existing) { send(existing); }
+        else {
+          reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          }).then(send).catch(function(){});
+        }
+      });
+    });
+  }, [patientCode]);
+
   const [profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_profile")||"null");}catch{return null;}});
   const [tab,setTab]=useState(0);
   const [meals,setMeals]=useState({breakfast:[],lunch:[],dinner:[],snacks:[]});
