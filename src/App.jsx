@@ -203,12 +203,16 @@ function LoginGate({ onPatient, onDoctor, onAppointment }) {
 
         <div style={{background:"#FFF",borderRadius:20,padding:"20px",boxShadow:"0 8px 40px rgba(21,46,68,0.10)"}}>
           <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1A1714",marginBottom:4}}>Acceso a la app</div>
+                    {!showRegister && (
+                    <>
           <div style={{fontSize:12,color:"#8C857C",marginBottom:14}}>Ingresa tu codigo de paciente para continuar</div>
           <input placeholder="Codigo APEX-0001" value={input} onChange={function(e){setInput(e.target.value);setError("");}} onKeyDown={function(e){if(e.key==="Enter")handleLogin();}} style={{background:"#F0EDE7",border:"1.5px solid "+(error?"#A02828":"rgba(21,46,68,0.10)"),borderRadius:12,padding:"13px 16px",color:"#1A1714",fontSize:14,width:"100%",outline:"none",marginBottom:10}}/>
           {error && <div style={{background:"#FEE2E2",color:"#A02828",borderRadius:10,padding:"8px 14px",fontSize:12,marginBottom:10}}>{error}</div>}
           <button onClick={handleLogin} disabled={loading||!input.trim()} style={{background:loading||!input.trim()?"#C4BDB5":"#152E44",color:"#FFF",border:"none",borderRadius:12,padding:13,fontWeight:700,fontSize:14,width:"100%"}}>
             {loading?"Verificando...":"Ingresar"}
           </button>
+                    </>
+                    )}
                     <button onClick={()=>setShowRegister(!showRegister)} style={{background:"transparent",border:"none",color:"#152E44",fontSize:12,fontWeight:600,textDecoration:"underline",marginTop:14,width:"100%",cursor:"pointer"}}>
                       {showRegister?"Cancelar registro":"¿Eres nuevo? Regístrate aquí"}
                     </button>
