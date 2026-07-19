@@ -842,8 +842,8 @@ function Nutrition({profile,meals,setMeals}) {
     setModal(false);setQuery("");setResult(null);
   }
 
-  const [dietForm,setDietForm]=useState({diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""});
-  const [dietFormDone,setDietFormDone]=useState(false);
+  const [dietForm,setDietForm]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_dietform"))||{diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}catch{return {diabetes:false,renal:false,hepatic:false,hipertension:false,colesterol:false,alergias:"",otrosAntecedentes:""};}});
+  const [dietFormDone,setDietFormDone]=useState(()=>!!localStorage.getItem("apex_dietform"));
 
   async function genDiet(){
     setPlanLoad(true);
@@ -920,7 +920,7 @@ RESPONDE SOLO JSON:
             <SI placeholder="ej. mariscos, gluten, lácteos, cacahuate..." value={dietForm.alergias} onChange={e=>setDietForm(f=>({...f,alergias:e.target.value}))} style={{marginBottom:14}}/>
             <FL>Otros antecedentes relevantes</FL>
             <SI placeholder="ej. gastritis, hipotiroidismo, embarazo..." value={dietForm.otrosAntecedentes} onChange={e=>setDietForm(f=>({...f,otrosAntecedentes:e.target.value}))} style={{marginBottom:18}}/>
-            <PBtn onClick={()=>{setDietFormDone(true);genDiet();}}>Generar mi plan personalizado →</PBtn>
+            <PBtn onClick={()=>{setDietFormDone(true);localStorage.setItem("apex_dietform",JSON.stringify(dietForm));genDiet();}}>Generar mi plan personalizado →</PBtn>
           </Card>}
             {planLoad&&<Card style={{textAlign:"center",padding:36}}><Spin/><div style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:C.navy}}>Creando tu plan...</div></Card>}
             {dietPlan&&<>
