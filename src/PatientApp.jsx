@@ -873,7 +873,8 @@ INSTRUCCIONES:
 - Si hay enfermedad renal: limita proteina a 0.6-0.8g/kg
 - Excluye ABSOLUTAMENTE cualquier alergia indicada
 
-RESPONDE SOLO JSON:
+IMPORTANTE: cada descripcion debe ser MUY BREVE, maximo 6 palabras. Se conciso para responder rapido.
+ RESPONDE SOLO JSON:
 {"objetivo":"descripcion personalizada","caloriasDiarias":${target},"distribucionMacros":{"carbs":"Xg","proteina":"Xg","grasas":"Xg"},"restricciones":["restriccion1","restriccion2"],"dias":[{"dia":"Lunes","desayuno":{"descripcion":"alimento con porcion exacta","calorias":X},"almuerzo":{"descripcion":"alimento con porcion exacta","calorias":X},"cena":{"descripcion":"alimento con porcion exacta","calorias":X},"totalDia":X}],"consejos":["consejo1","consejo2","consejo3"]}`;
     const text=await callClaude("Nutricionista clinico experto. SOLO JSON valido sin texto extra ni backticks.",prompt,6000);
   try{setDietPlan(JSON.parse(text.replace(/```json|```/g,"").trim()));}catch{setDietPlan(null);setDietError(text.slice(0,400)||"vacio");}
