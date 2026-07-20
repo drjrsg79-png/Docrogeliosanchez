@@ -857,7 +857,7 @@ function Nutrition({profile,meals,setMeals}) {
     if(dietForm.alergias) antecedentes.push("Alergias/intolerancias: "+dietForm.alergias+" - EXCLUIR completamente estos alimentos");
     if(dietForm.otrosAntecedentes) antecedentes.push("Otros: "+dietForm.otrosAntecedentes);
     const antStr=antecedentes.length>0?"ANTECEDENTES CRITICOS:\n"+antecedentes.join("\n"):"Sin antecedentes especiales";
-    const prompt=`Eres nutricionista clinico experto. Crea un plan de dieta PERSONALIZADO de lunes a domingo.
+    const prompt=`Eres nutricionista clinico experto. Crea un plan de dieta PERSONALIZADO de lunes a miercoles (SOLO 3 dias, no mas) para que la respuesta sea rapida.
 
 PACIENTE: ${profile.sex==="male"?"Hombre":"Mujer"}, ${profile.age} anos, ${profile.weight}kg, ${profile.height}cm
 OBJETIVO: ${profile.goal==="lose"?"Perdida de peso":profile.goal==="gain"?"Ganancia muscular":profile.goal==="recomp"?"Recomposicion":"Mantenimiento"}
@@ -876,7 +876,7 @@ INSTRUCCIONES:
 IMPORTANTE: cada descripcion debe ser MUY BREVE, maximo 6 palabras. Se conciso para responder rapido.
  RESPONDE SOLO JSON:
 {"objetivo":"descripcion personalizada","caloriasDiarias":${target},"distribucionMacros":{"carbs":"Xg","proteina":"Xg","grasas":"Xg"},"restricciones":["restriccion1","restriccion2"],"dias":[{"dia":"Lunes","desayuno":{"descripcion":"alimento con porcion exacta","calorias":X},"almuerzo":{"descripcion":"alimento con porcion exacta","calorias":X},"cena":{"descripcion":"alimento con porcion exacta","calorias":X},"totalDia":X}],"consejos":["consejo1","consejo2","consejo3"]}`;
-    const text=await callClaude("Nutricionista clinico experto. SOLO JSON valido sin texto extra ni backticks.",prompt,6000);
+    const text=await callClaude("Nutricionista clinico experto. SOLO JSON valido sin texto extra ni backticks.",prompt,3000);
   try{setDietPlan(JSON.parse(text.replace(/```json|```/g,"").trim()));}catch{setDietPlan(null);setDietError(text.slice(0,400)||"vacio");}
     setPlanLoad(false);
   }
