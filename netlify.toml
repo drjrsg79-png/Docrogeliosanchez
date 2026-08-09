@@ -3,11 +3,8 @@
   publish   = "dist"
   functions = "netlify/functions"
 
-[[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/:splat"
-  status = 200
-
+# Las funciones declaran sus propias rutas /api/... con `export const config`.
+# Todo lo demás se resuelve en el cliente (SPA).
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
