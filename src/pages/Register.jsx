@@ -27,11 +27,16 @@ export default function Register() {
     }
 
     if (data.user) {
-      await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         full_name: fullName,
         role: 'patient',
       })
+      if (profileError) {
+        setError('Tu cuenta se creó, pero hubo un problema al guardar tu perfil: ' + profileError.message)
+        setLoading(false)
+        return
+      }
     }
 
     setLoading(false)
@@ -39,48 +44,51 @@ export default function Register() {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-      <h1>Crear cuenta</h1>
-      <form onSubmit={handleRegister}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Nombre completo</label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Correo</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem' }}>
-          {loading ? 'Creando cuenta...' : 'Registrarme'}
-        </button>
-      </form>
-      <p style={{ marginTop: '1rem' }}>
-        ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-      </p>
+    <div className="page">
+      <div className="header">
+        <div className="header-title">Dr. Rogelio Sánchez</div>
+      </div>
+      <div className="auth-container">
+        <h1 className="page-title">Crear cuenta</h1>
+        <p className="page-subtitle">Regístrate para comenzar tu seguimiento clínico.</p>
+        <form onSubmit={handleRegister}>
+          <div className="field">
+            <label>Nombre completo</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label>Correo electrónico</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+          {error && <div className="alert-error">{error}</div>}
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Creando cuenta...' : 'Registrarme'}
+          </button>
+        </form>
+        <p className="footer-link">
+          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+        </p>
+      </div>
     </div>
   )
 }
