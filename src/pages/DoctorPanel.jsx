@@ -8,6 +8,7 @@ const GLUCOSE_HIGH = 180
 export default function DoctorPanel() {
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -64,6 +65,11 @@ export default function DoctorPanel() {
 
   const alertCount = patients.filter((p) => p.status === 'alerta').length
 
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const filteredPatients = normalizedSearch
+    ? patients.filter((p) => (p.full_name || '').toLowerCase().includes(normalizedSearch))
+    : patients
+
   return (
     <div className="page">
       <div className="header">
@@ -74,13 +80,70 @@ export default function DoctorPanel() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <div className="section-label">Pacientes</div>
+        <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar paciente por nombre..."
+            style={{
+              width: '100%',
+              padding: '0.625rem 0.875rem 0.625rem 2.5rem',
+              borderRadius: '10px',
+              border: '1px solid rgba(15,76,92,0.2)',
+              fontSize: '0.9375rem',
+              boxSizing: 'border-box',
+            }}
+          />
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#5c6b73"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#5c6b73',
+                fontSize: '1.125rem',
+                lineHeight: 1,
+                padding: '0.25rem',
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        <div className="section-label">
+          Pacientes{normalizedSearch ? ` (${filteredPatients.length})` : ''}
+        </div>
 
         {patients.length === 0 && (
           <div className="empty-state">Aún no hay pacientes registrados.</div>
         )}
 
-        {patients.map((p) => (
+        {patients.length > 0 && filteredPatients.length === 0 && (
+          <div className="empty-state">No se encontró ningún paciente con ese nombre.</div>
+        )}
+
+        {filteredPatients.map((p) => (
           <Link
             key={p.id}
             to={`/doctor/patient/${p.id}`}
