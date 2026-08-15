@@ -7,9 +7,9 @@ export default async function handler(request) {
 
 Paciente: tipo de diabetes ${diabetesType || 'no especificado'}, objetivo: ${goal || 'control glucemico'}, peso actual ${currentWeight || 'no especificado'} kg, estatura ${heightCm || 'no especificado'} cm, peso meta ${weightGoal || 'no especificado'} kg.
 
-Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown:
+Responde UNICAMENTE con un JSON valido de una sola linea, sin saltos de linea dentro de los textos, sin texto adicional, sin markdown:
 {
-  "resumen": "explicacion breve, maximo 2 frases",
+  "resumen": "explicacion breve en una sola linea, maximo 2 frases",
   "calorias_diarias": numero entero,
   "carbohidratos_g": numero entero,
   "proteina_g": numero entero,
@@ -25,9 +25,9 @@ Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 500,
+        max_tokens: 800,
         system: systemPrompt,
-        messages: [{ role: 'user', content: 'Genera el resumen y macros diarios, solo el JSON.' }],
+        messages: [{ role: 'user', content: 'Genera el resumen y macros diarios, solo el JSON en una sola linea.' }],
       }),
     })
 
@@ -38,11 +38,18 @@ Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown:
 
     const textContent = data.content?.find((c) => c.type === 'text')?.text || ''
     let cleaned = textContent.replace(/```json|```/g, '').trim()
+    cleaned = cleaned.replace(/[\u0000-\u001F]+/g, ' ')
     const firstBrace = cleaned.indexOf('{')
     const lastBrace = cleaned.lastIndexOf('}')
     if (firstBrace !== -1 && lastBrace !== -1) cleaned = cleaned.slice(firstBrace, lastBrace + 1)
 
-    const parsed = JSON.parse(cleaned)
+    let parsed
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch (parseErr) {
+      return new Response(JSON.stringify({ error: 'No se pudo interpretar el resumen generado. Intenta de nuevo.' }), { status: 500 })
+    }
+
     return new Response(JSON.stringify(parsed), { status: 200, headers: { 'Content-Type': 'application/json' } })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 })
