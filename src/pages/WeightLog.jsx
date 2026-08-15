@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
+import Toast from '../components/Toast'
 
 function calcularIMC(pesoKg, alturaCm) {
   const alturaM = alturaCm / 100
@@ -55,6 +56,7 @@ export default function WeightLog() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [lastResult, setLastResult] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [toast, setToast] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -101,6 +103,7 @@ export default function WeightLog() {
 
     if (!error) {
       setProfile({ ...profile, ...updates })
+      setToast('Datos guardados')
     }
     setSavingProfile(false)
   }
@@ -129,6 +132,7 @@ export default function WeightLog() {
         setLastResult({ imc, ...evaluarIMC(imc) })
       }
       setWeight('')
+      setToast('Peso guardado')
     }
     setSaving(false)
   }
@@ -146,6 +150,8 @@ export default function WeightLog() {
 
   return (
     <div className="page">
+      <Toast message={toast} onClose={() => setToast('')} />
+
       <div className="header">
         <div className="header-title">Peso</div>
         <div className="header-subtitle">Registro de peso corporal e IMC</div>
@@ -265,4 +271,4 @@ export default function WeightLog() {
       </div>
     </div>
   )
-          }
+}
