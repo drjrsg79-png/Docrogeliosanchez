@@ -41,37 +41,41 @@ export default function Login() {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-      <h1>Iniciar sesión</h1>
-      <form onSubmit={handleLogin}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Correo</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem' }}>
-          {loading ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
-      <p style={{ marginTop: '1rem' }}>
-        ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
-      </p>
+    <div className="page">
+      <div className="header">
+        <div className="header-title">Dr. Rogelio Sánchez</div>
+      </div>
+      <div className="auth-container">
+        <h1 className="page-title">Iniciar sesión</h1>
+        <p className="page-subtitle">Accede a tu espacio de seguimiento clínico.</p>
+        <form onSubmit={handleLogin}>
+          <div className="field">
+            <label>Correo electrónico</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <div className="alert-error">{error}</div>}
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Ingresando...' : 'Ingresar'}
+          </button>
+        </form>
+        <p className="footer-link">
+          ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+        </p>
+      </div>
     </div>
   )
 }
