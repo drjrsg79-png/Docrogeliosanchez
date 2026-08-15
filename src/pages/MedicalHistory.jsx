@@ -12,6 +12,24 @@ const COMPLICACIONES = [
   'Enfermedad cardiovascular',
 ]
 
+const NIVELES_ACTIVIDAD = [
+  { value: 'sedentario', label: 'Sedentario (poco o nada de ejercicio)', factor: 1.2 },
+  { value: 'ligero', label: 'Ligero (ejercicio 1-3 días/semana)', factor: 1.375 },
+  { value: 'moderado', label: 'Moderado (ejercicio 3-5 días/semana)', factor: 1.55 },
+  { value: 'activo', label: 'Activo (ejercicio 6-7 días/semana)', factor: 1.725 },
+  { value: 'muy_activo', label: 'Muy activo (ejercicio intenso diario)', factor: 1.9 },
+]
+
+function calcAge(birthDate) {
+  if (!birthDate) return null
+  const b = new Date(birthDate)
+  const today = new Date()
+  let age = today.getFullYear() - b.getFullYear()
+  const m = today.getMonth() - b.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--
+  return age
+}
+
 export default function MedicalHistory() {
   const [userId, setUserId] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -34,6 +52,10 @@ export default function MedicalHistory() {
   const [heightCm, setHeightCm] = useState('')
   const [currentWeight, setCurrentWeight] = useState('')
   const [hasWeightLog, setHasWeightLog] = useState(false)
+  const [birthDate, setBirthDate] = useState('')
+  const [sex, setSex] = useState('')
+  const [activityLevel, setActivityLevel] = useState('sedentario')
+  const [suggestion, setSuggestion] = useState(null)
 
   const navigate = useNavigate()
 
@@ -62,6 +84,8 @@ export default function MedicalHistory() {
         setAlcohol(data.alcohol || false)
         setDailyCalorieGoal(data.daily_calorie_goal || 2000)
         setHeightCm(data.height_cm || '')
+        setBirthDate(data.birth_date || '')
+        setSex(data.sex || '')
       }
 
       const { data: weightData } = await supabase
@@ -89,6 +113,27 @@ export default function MedicalHistory() {
 
   const noTieneDiabetes = diabetesType === 'ninguna'
 
+  function handleCalcularSugerencia() {
+    const age = calcAge(birthDate)
+    const weight = parseFloat(currentWeight)
+    const height = parseFloat(heightCm)
+
+    if (!age || !weight || !height || !sex) {
+      setSuggestion({ error: true })
+      return
+    }
+
+    const bmr = sex === 'male'
+      ? 10 * weight + 6.25 * height - 5 * age + 5
+      : 10 * weight + 6.25 * height - 5 * age - 161
+
+    const factor = NIVELES_ACTIVIDAD.find((n) => n.value === activityLevel)?.factor || 1.2
+    const tdee = Math.round(bmr * factor)
+
+    setSuggestion({ value: tdee })
+    setDailyCalorieGoal(String(tdee))
+  }
+
   async function handleSave(e) {
     e.preventDefault()
     setSaving(true)
@@ -111,6 +156,8 @@ export default function MedicalHistory() {
         alcohol,
         daily_calorie_goal: dailyCalorieGoal ? parseInt(dailyCalorieGoal, 10) : 2000,
         height_cm: heightCm ? parseFloat(heightCm) : null,
+        birth_date: birthDate || null,
+        sex: sex || null,
       })
       .eq('id', userId)
 
@@ -143,6 +190,18 @@ export default function MedicalHistory() {
         <form onSubmit={handleSave}>
           <div className="card">
             <div className="section-label" style={{ marginBottom: '1rem' }}>Datos generales</div>
+            <div className="field">
+              <label>Fecha de nacimiento</label>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Sexo</label>
+              <select value={sex} onChange={(e) => setSex(e.target.value)}>
+                <option value="">Selecciona una opción</option>
+                <option value="female">Femenino</option>
+                <option value="male">Masculino</option>
+              </select>
+            </div>
             <div className="field">
               <label>Estatura (cm)</label>
               <input type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} placeholder="Ej. 165" />
@@ -258,6 +317,35 @@ export default function MedicalHistory() {
 
           <div className="card">
             <div className="section-label" style={{ marginBottom: '1rem' }}>Meta calórica diaria</div>
+            <div className="field">
+              <label>Nivel de actividad física</label>
+              <select value={activityLevel} onChange={(e) => setActivityLevel(e.target.value)}>
+                {NIVELES_ACTIVIDAD.map((n) => (
+                  <option key={n.value} value={n.value}>{n.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCalcularSugerencia}
+              className="btn btn-secondary"
+              style={{ marginBottom: '1rem' }}
+            >
+              Calcular sugerencia
+            </button>
+
+            {suggestion?.error && (
+              <p className="card-meta" style={{ color: '#b3261e', marginBottom: '1rem' }}>
+                Completa fecha de nacimiento, sexo, estatura y peso para calcular una sugerencia.
+              </p>
+            )}
+            {suggestion?.value && (
+              <p className="card-meta" style={{ marginBottom: '1rem' }}>
+                Sugerencia de mantenimiento: {suggestion.value} kcal/día. Ya la aplicamos abajo — puedes ajustarla si tu doctor te indicó otra meta (por ejemplo, restar 300-500 kcal para bajar de peso gradualmente).
+              </p>
+            )}
+
             <div className="field">
               <label>Calorías objetivo por día</label>
               <input type="number" value={dailyCalorieGoal} onChange={(e) => setDailyCalorieGoal(e.target.value)} placeholder="Ej. 1800" />
