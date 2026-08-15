@@ -8,6 +8,8 @@ import WeightLog from './pages/WeightLog'
 import MealLog from './pages/MealLog'
 import ExerciseLog from './pages/ExerciseLog'
 import WaterLog from './pages/WaterLog'
+import ExerciseRoutine from './pages/ExerciseRoutine'
+import DietPlan from './pages/DietPlan'
 
 function Home() {
   return (
@@ -44,6 +46,8 @@ function App() {
       <Route path="/comidas" element={<MealLog />} />
       <Route path="/ejercicio" element={<ExerciseLog />} />
       <Route path="/agua" element={<WaterLog />} />
+      <Route path="/rutina" element={<ExerciseRoutine />} />
+      <Route path="/dieta" element={<DietPlan />} />
     </Routes>
   )
 }
