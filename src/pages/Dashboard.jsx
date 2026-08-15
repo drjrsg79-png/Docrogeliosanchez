@@ -56,10 +56,12 @@ export default function Dashboard() {
           </div>
         </a>
 
-        <div className="card" style={{ opacity: 0.6 }}>
-          <div className="card-title">Comidas</div>
-          <div className="card-meta">Próximamente</div>
-        </div>
+        <a href="/comidas" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Comidas</div>
+            <div className="card-meta">Registra tu alimentación diaria</div>
+          </div>
+        </a>
 
         <div className="card" style={{ opacity: 0.6 }}>
           <div className="card-title">Ejercicio</div>
