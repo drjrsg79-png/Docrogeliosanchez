@@ -31,6 +31,9 @@ export default function MedicalHistory() {
   const [smoker, setSmoker] = useState(false)
   const [alcohol, setAlcohol] = useState(false)
   const [dailyCalorieGoal, setDailyCalorieGoal] = useState('2000')
+  const [heightCm, setHeightCm] = useState('')
+  const [currentWeight, setCurrentWeight] = useState('')
+  const [hasWeightLog, setHasWeightLog] = useState(false)
 
   const navigate = useNavigate()
 
@@ -58,7 +61,21 @@ export default function MedicalHistory() {
         setSmoker(data.smoker || false)
         setAlcohol(data.alcohol || false)
         setDailyCalorieGoal(data.daily_calorie_goal || 2000)
+        setHeightCm(data.height_cm || '')
       }
+
+      const { data: weightData } = await supabase
+        .from('weight_logs')
+        .select('weight_kg')
+        .eq('user_id', user.id)
+        .order('logged_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (weightData) {
+        setCurrentWeight(weightData.weight_kg)
+        setHasWeightLog(true)
+      }
+
       setLoading(false)
     }
     load()
@@ -93,8 +110,17 @@ export default function MedicalHistory() {
         smoker,
         alcohol,
         daily_calorie_goal: dailyCalorieGoal ? parseInt(dailyCalorieGoal, 10) : 2000,
+        height_cm: heightCm ? parseFloat(heightCm) : null,
       })
       .eq('id', userId)
+
+    if (!error && currentWeight && !hasWeightLog) {
+      await supabase.from('weight_logs').insert({
+        user_id: userId,
+        weight_kg: parseFloat(currentWeight),
+      })
+      setHasWeightLog(true)
+    }
 
     setSaving(false)
     if (!error) setSaved(true)
@@ -115,6 +141,30 @@ export default function MedicalHistory() {
         </Link>
 
         <form onSubmit={handleSave}>
+          <div className="card">
+            <div className="section-label" style={{ marginBottom: '1rem' }}>Datos generales</div>
+            <div className="field">
+              <label>Estatura (cm)</label>
+              <input type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} placeholder="Ej. 165" />
+            </div>
+            <div className="field">
+              <label>Peso actual (kg){hasWeightLog ? ' — ya registrado, actualízalo en la sección de Peso' : ''}</label>
+              <input
+                type="number"
+                step="0.1"
+                value={currentWeight}
+                onChange={(e) => setCurrentWeight(e.target.value)}
+                placeholder="Ej. 78.5"
+                disabled={hasWeightLog}
+              />
+              {hasWeightLog && (
+                <p className="card-meta" style={{ marginTop: '0.375rem' }}>
+                  Para actualizar tu peso ve a <Link to="/peso">la sección de Peso</Link>.
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="card">
             <div className="section-label" style={{ marginBottom: '1rem' }}>Diagnóstico</div>
             <div className="field">
