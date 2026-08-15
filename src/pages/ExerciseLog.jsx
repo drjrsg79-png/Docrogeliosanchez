@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import jsPDF from 'jspdf'
 import { supabase } from '../lib/supabase'
 import FootCareWarning from '../components/FootCareWarning'
+import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addFootersToAllPages } from '../lib/pdfStyle'
 
-export default function ExerciseLog() {
-  const [logs, setLogs] = useState([])
-  const [activity, setActivity] = useState('')
-  const [duration, setDuration] = useState('')
-  const [calories, setCalories] = useState('')
+export default function ExerciseRoutine() {
+  const [profile, setProfile] = useState(null)
+  const [conditionNotes, setConditionNotes] = useState('')
+  const [goal, setGoal] = useState('')
+  const [routine, setRoutine] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [userId, setUserId] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -20,44 +22,66 @@ export default function ExerciseLog() {
         navigate('/login')
         return
       }
-      setUserId(user.id)
-
-      const { data } = await supabase
-        .from('exercise_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(30)
-
-      setLogs(data || [])
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      setProfile(data)
       setLoading(false)
     }
     load()
   }, [navigate])
 
-  async function handleSubmit(e) {
+  async function handleGenerate(e) {
     e.preventDefault()
-    if (!activity) return
-    setSaving(true)
+    setGenerating(true)
+    setError('')
+    setRoutine(null)
 
-    const { data, error } = await supabase
-      .from('exercise_logs')
-      .insert({
-        user_id: userId,
-        activity,
-        duration_min: duration ? parseInt(duration, 10) : null,
-        calories_burned: calories ? parseInt(calories, 10) : null,
+    try {
+      const response = await fetch('/.netlify/functions/generate-exercise-routine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conditionNotes, goal }),
       })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setLogs([data, ...logs])
-      setActivity('')
-      setDuration('')
-      setCalories('')
+      const result = await response.json()
+      if (!response.ok || result.error) {
+        setError(result.error || 'No se pudo generar la rutina.')
+      } else {
+        setRoutine(result)
+      }
+    } catch {
+      setError('No se pudo generar la rutina. Verifica tu conexión.')
     }
-    setSaving(false)
+    setGenerating(false)
+  }
+
+  function handleDownloadPdf() {
+    if (!routine) return
+    const doc = new jsPDF()
+
+    let y = newStyledPdf(doc, 'Rutina de ejercicio', 'Plan semanal personalizado', profile?.full_name)
+
+    const resumenLines = doc.splitTextToSize(routine.resumen || '', 175)
+    y = addSectionBox(doc, y, resumenLines)
+
+    routine.dias?.forEach((dia) => {
+      y = checkPageBreak(doc, y, 20)
+      y = addDayHeader(doc, y, dia.dia)
+
+      dia.ejercicios?.forEach((ej) => {
+        y = checkPageBreak(doc, y, 18)
+        y = addItemLine(doc, y, `${ej.nombre} — ${ej.series_repeticiones}`, null, ej.notas)
+      })
+      y += 3
+    })
+
+    addFootersToAllPages(doc)
+    doc.save('rutina-ejercicio.pdf')
+  }
+
+  function handleWhatsAppShare() {
+    if (!routine) return
+    const resumen = `Rutina de ejercicio semanal - ${profile?.full_name || ''}\n\n${routine.resumen}\n\nDescargué el PDF completo con el detalle de cada día. Te lo comparto.`
+    const url = `https://wa.me/?text=${encodeURIComponent(resumen)}`
+    window.open(url, '_blank')
   }
 
   if (loading) return <div className="container">Cargando...</div>
@@ -65,8 +89,8 @@ export default function ExerciseLog() {
   return (
     <div className="page">
       <div className="header">
-        <div className="header-title">Ejercicio</div>
-        <div className="header-subtitle">Registro de actividad física</div>
+        <div className="header-title">Rutina de ejercicio</div>
+        <div className="header-subtitle">Plan semanal generado según tu condición</div>
       </div>
 
       <div className="container" style={{ flex: 1 }}>
@@ -77,57 +101,61 @@ export default function ExerciseLog() {
         <FootCareWarning />
 
         <div className="card">
-          <div className="section-label" style={{ marginBottom: '1rem' }}>Nuevo registro</div>
-          <form onSubmit={handleSubmit}>
+          <div className="section-label" style={{ marginBottom: '1rem' }}>Generar rutina personalizada</div>
+          <form onSubmit={handleGenerate}>
             <div className="field">
-              <label>Actividad</label>
+              <label>¿Tienes alguna condición o lesión actual?</label>
+              <textarea
+                value={conditionNotes}
+                onChange={(e) => setConditionNotes(e.target.value)}
+                placeholder="Ej. Herida activa en pie derecho, sin autorización para apoyar peso"
+                rows={3}
+              />
+            </div>
+            <div className="field">
+              <label>Objetivo</label>
               <input
                 type="text"
-                value={activity}
-                onChange={(e) => setActivity(e.target.value)}
-                placeholder="Ej. Caminata, bicicleta fija, estiramientos"
-                required
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="Ej. Mejorar movilidad, bajar de peso, mantener condición"
               />
             </div>
-            <div className="field">
-              <label>Duración (minutos)</label>
-              <input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="Ej. 30"
-              />
-            </div>
-            <div className="field">
-              <label>Calorías quemadas (opcional)</label>
-              <input
-                type="number"
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
-                placeholder="Ej. 150"
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar actividad'}
+            <button type="submit" className="btn btn-primary" disabled={generating}>
+              {generating ? 'Generando rutina...' : 'Generar rutina'}
             </button>
           </form>
         </div>
 
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Historial reciente</div>
-        {logs.length === 0 && (
-          <div className="empty-state">Aún no has registrado actividad física.</div>
-        )}
-        {logs.map((l) => (
-          <div key={l.id} className="card">
-            <div className="card-title">{l.activity}</div>
-            <div className="card-meta">
-              {l.duration_min && `${l.duration_min} min`}
-              {l.calories_burned && ` · ${l.calories_burned} kcal`}
-              {' · '}
-              {new Date(l.logged_at).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+        {error && <div className="alert-error">{error}</div>}
+
+        {routine && (
+          <>
+            <div className="card">
+              <div className="card-meta">{routine.resumen}</div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button onClick={handleDownloadPdf} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Descargar PDF
+                </button>
+                <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Compartir por WhatsApp
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+
+            {routine.dias?.map((dia) => (
+              <div key={dia.dia} className="card">
+                <div className="card-title">{dia.dia}</div>
+                {dia.ejercicios?.map((ej, i) => (
+                  <div key={i} style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: i > 0 ? '1px solid #dde3e6' : 'none' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{ej.nombre} — {ej.series_repeticiones}</div>
+                    {ej.notas && <div className="card-meta">{ej.notas}</div>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   )
