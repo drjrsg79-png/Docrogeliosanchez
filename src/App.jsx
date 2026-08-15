@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import DoctorPanel from './pages/DoctorPanel'
+import PatientDetail from './pages/PatientDetail'
 import GlucoseLog from './pages/GlucoseLog'
 import WeightLog from './pages/WeightLog'
 import MealLog from './pages/MealLog'
@@ -90,6 +91,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/doctor" element={<DoctorPanel />} />
+      <Route path="/doctor/patient/:id" element={<PatientDetail />} />
       <Route path="/glucosa" element={<GlucoseLog />} />
       <Route path="/peso" element={<WeightLog />} />
       <Route path="/comidas" element={<MealLog />} />
