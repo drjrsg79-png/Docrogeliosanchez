@@ -99,7 +99,7 @@ export default function ExerciseLog() {
           </Link>
         )}
 
-        <div className="card">
+        <div className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
           <div className="section-label" style={{ marginBottom: '1rem' }}>Nuevo registro</div>
           <p className="card-meta" style={{ marginBottom: '1rem' }}>
             Las calorías quemadas se calculan automáticamente según tu actividad, duración y peso registrado.
@@ -131,16 +131,18 @@ export default function ExerciseLog() {
           </form>
         </div>
 
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Historial reciente</div>
+        <div className="section-label" style={{ marginTop: '2rem', marginBottom: '0.5rem' }}>Historial reciente</div>
+
         {logs.length === 0 && (
           <div className="empty-state">Aún no has registrado actividad física.</div>
         )}
+
         {logs.map((l) => (
-          <div key={l.id} className="card">
+          <div key={l.id} className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
             <div className="card-title">{l.activity}</div>
             <div className="card-meta">
               {l.duration_min && `${l.duration_min} min`}
-              {l.calories_burned && ` · ${l.calories_burned} kcal quemadas`}
+              {l.calories_burned != null && ` · ${l.calories_burned} kcal quemadas`}
               {' · '}
               {new Date(l.logged_at).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -149,4 +151,4 @@ export default function ExerciseLog() {
       </div>
     </div>
   )
-}
+              }
