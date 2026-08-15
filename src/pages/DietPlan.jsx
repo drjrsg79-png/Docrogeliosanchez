@@ -59,7 +59,7 @@ export default function DietPlan() {
       })
       const result = await response.json()
       if (!response.ok || result.error) {
-        setError(result.error || 'No se pudo generar el plan.')
+        setError((result.error || 'No se pudo generar el plan.') + (result.rawPreview ? ' — Vista previa: ' + result.rawPreview : ''))
       } else {
         setPlan(result)
       }
@@ -170,4 +170,4 @@ export default function DietPlan() {
       </div>
     </div>
   )
-}
+              }
