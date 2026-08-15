@@ -2,6 +2,7 @@ const COLOR_PRIMARY = [15, 76, 92]
 const COLOR_TEXT = [28, 43, 51]
 const COLOR_MUTED = [92, 107, 115]
 const COLOR_LIGHT_BG = [232, 241, 243]
+const COLOR_LINK = [21, 101, 192]
 const MARGIN = 14
 const PAGE_HEIGHT = 297
 const PAGE_WIDTH = 210
@@ -41,7 +42,7 @@ export function newStyledPdf(doc, title, subtitle, patientName) {
   return y + 8
 }
 
-export function checkPageBreak(doc, y, needed, patientName, title) {
+export function checkPageBreak(doc, y, needed) {
   if (y + needed > PAGE_HEIGHT - 20) {
     doc.addPage()
     return 20
@@ -95,7 +96,16 @@ export function addItemLine(doc, y, titleText, metaText, noteText) {
     y += noteLines.length * 3.8
   }
 
-  return y + 3
+  return y + 1
+}
+
+export function addVideoLink(doc, y, query) {
+  const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_LINK)
+  doc.textWithLink(`▶ Ver video: ${query}`, MARGIN + 6, y, { url })
+  doc.setTextColor(...COLOR_TEXT)
+  return y + 4.5
 }
 
 export function addFootersToAllPages(doc) {
