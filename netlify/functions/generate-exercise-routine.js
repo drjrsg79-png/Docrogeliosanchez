@@ -3,28 +3,30 @@ export default async function handler(request) {
     const body = await request.json()
     const { conditionNotes, goal } = body
 
-    const systemPrompt = `Eres un especialista en rehabilitación física y entrenador certificado, experto en pacientes diabéticos, incluyendo aquellos con pie diabético o heridas activas.
+    const systemPrompt = `Eres un especialista en rehabilitacion fisica y entrenador certificado, experto en pacientes diabeticos, incluyendo aquellos con pie diabetico o heridas activas.
 
-Genera una rutina de ejercicio semanal (7 días) segura y apropiada, considerando estas condiciones del paciente: ${conditionNotes || 'sin condiciones especiales reportadas'}.
+Genera una rutina de ejercicio semanal (7 dias) segura y apropiada, considerando estas condiciones del paciente: ${conditionNotes || 'sin condiciones especiales reportadas'}.
 Objetivo del paciente: ${goal || 'salud general'}.
 
 Reglas de seguridad OBLIGATORIAS:
-- Si el paciente menciona herida, lesión, pie diabético, o cualquier problema en pies o piernas, NUNCA incluyas ejercicios de carga de peso, caminata, o impacto en esa zona. Usa alternativas de bajo impacto (movilidad de tren superior, ejercicios sentado, respiración).
-- Incluye días de descanso.
+- Si el paciente menciona herida, lesion, pie diabetico, o cualquier problema en pies o piernas, NUNCA incluyas ejercicios de carga de peso, caminata, o impacto en esa zona. Usa alternativas de bajo impacto.
+- Incluye dias de descanso.
 
-Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con esta forma exacta:
+IMPORTANTE: se breve. Las "notas" deben tener MAXIMO 12 palabras. El "resumen" debe tener MAXIMO 2 frases cortas.
+
+Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown, con esta forma exacta:
 {
-  "resumen": "explicacion breve de 2-3 frases sobre el enfoque de esta rutina y por que es apropiada para este paciente",
+  "resumen": "explicacion muy breve, maximo 2 frases",
   "dias": [
     {
       "dia": "Lunes",
       "ejercicios": [
-        { "nombre": "nombre del ejercicio", "series_repeticiones": "ej. 3x12 o 20 minutos", "notas": "indicacion breve de tecnica o precaucion" }
+        { "nombre": "nombre del ejercicio", "series_repeticiones": "ej. 3x12 o 20 minutos", "notas": "maximo 12 palabras" }
       ]
     }
   ]
 }
-El array "dias" debe tener exactamente 7 objetos, uno por cada dia de la semana empezando en Lunes. Los dias de descanso deben tener un solo ejercicio con nombre "Descanso" y notas explicando por que.`
+El array "dias" debe tener exactamente 7 objetos, uno por cada dia empezando en Lunes. Dias de descanso: un solo ejercicio "Descanso" con nota breve. Se conciso para responder rapido.`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -35,9 +37,9 @@ El array "dias" debe tener exactamente 7 objetos, uno por cada dia de la semana 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 3000,
+        max_tokens: 2000,
         system: systemPrompt,
-        messages: [{ role: 'user', content: 'Genera la rutina semanal solicitada, solo el JSON.' }],
+        messages: [{ role: 'user', content: 'Genera la rutina semanal solicitada, solo el JSON, se breve y conciso.' }],
       }),
     })
 
