@@ -50,7 +50,7 @@ function Home() {
 
       <div className="auth-container" style={{ marginTop: '2.5rem' }}>
         <p className="page-subtitle" style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '1rem' }}>
-          Plataforma de orientación y seguimiento clínico para pacientes con diabetes.
+          Plataforma de orientación y seguimiento clínico para los pacientes del Dr. Rogelio Sánchez.
         </p>
         <a
           href="/login"
