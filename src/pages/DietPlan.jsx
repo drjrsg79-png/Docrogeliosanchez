@@ -71,7 +71,7 @@ export default function DietPlan() {
       const dias = []
       for (let i = 0; i < DIAS.length; i++) {
         const diaNombre = DIAS[i]
-        setProgress(`Generando ${diaNombre} (${i + 1}/7)...`)
+        setProgress(`Generando ${diaNombre} (día ${i + 1} de 7)...`)
 
         const dayRes = await fetch('/.netlify/functions/generate-diet-day', {
           method: 'POST',
@@ -149,6 +149,9 @@ export default function DietPlan() {
 
         <div className="card">
           <div className="section-label" style={{ marginBottom: '1rem' }}>Generar plan personalizado</div>
+          <p className="card-meta" style={{ marginBottom: '1rem' }}>
+            El plan se genera día por día para garantizar mayor precisión. El proceso completo toma aproximadamente 1 minuto — verás cada día aparecer conforme se va generando, no es necesario recargar la página.
+          </p>
           <form onSubmit={handleGenerate}>
             <div className="field">
               <label>Objetivo</label>
@@ -163,6 +166,11 @@ export default function DietPlan() {
               {generating ? (progress || 'Generando...') : 'Generar plan'}
             </button>
           </form>
+          {generating && (
+            <p className="card-meta" style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+              No cierres esta pantalla mientras se genera tu plan.
+            </p>
+          )}
         </div>
 
         {error && <div className="alert-error">{error}</div>}
@@ -203,4 +211,4 @@ export default function DietPlan() {
       </div>
     </div>
   )
-      }
+}
