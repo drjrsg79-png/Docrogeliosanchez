@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Toast from '../components/Toast'
 
 const DAILY_GOAL_ML = 2000
 const QUICK_AMOUNTS = [250, 500, 750]
@@ -11,6 +12,7 @@ export default function WaterLog() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState(null)
+  const [toast, setToast] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function WaterLog() {
     if (!error && data) {
       setLogs([data, ...logs])
       setCustomAmount('')
+      setToast(`${amountMl} ml agregados`)
     }
     setSaving(false)
   }
@@ -65,6 +68,8 @@ export default function WaterLog() {
 
   return (
     <div className="page">
+      <Toast message={toast} onClose={() => setToast('')} />
+
       <div className="header">
         <div className="header-title">Agua</div>
         <div className="header-subtitle">Registro de hidratación diaria</div>
