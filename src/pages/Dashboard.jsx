@@ -30,6 +30,8 @@ function Icon({ name, color }) {
       return <svg {...common}><rect x="6" y="4" width="12" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M9 11h6M9 15h6" /></svg>
     case 'chat':
       return <svg {...common}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" /></svg>
+    case 'calendar':
+      return <svg {...common}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
     default:
       return null
   }
@@ -49,6 +51,9 @@ const PLANES = [
   { href: '/dieta', label: 'Plan de alimentación', icon: 'clipboard', color: '#a15c00' },
 ]
 
+const WHATSAPP_NUMBER = '5215569320331'
+const WHATSAPP_MESSAGE = 'Hola, no me encuentro en CDMX y me gustaría agendar una videollamada con el Dr. Rogelio Sánchez.'
+
 export default function Dashboard() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -57,6 +62,7 @@ export default function Dashboard() {
   const [waterToday, setWaterToday] = useState(0)
   const [latestGlucose, setLatestGlucose] = useState(null)
   const [glucoseTrend, setGlucoseTrend] = useState([])
+  const [showAgendaModal, setShowAgendaModal] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -112,6 +118,17 @@ export default function Dashboard() {
   async function handleLogout() {
     await supabase.auth.signOut()
     navigate('/login')
+  }
+
+  function handleWhatsApp() {
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setShowAgendaModal(false)
+  }
+
+  function handleMiadmon() {
+    window.open('https://miadmon.com/agendar', '_blank', 'noopener,noreferrer')
+    setShowAgendaModal(false)
   }
 
   if (loading) return <div className="container">Cargando...</div>
@@ -231,6 +248,86 @@ export default function Dashboard() {
           </div>
         </a>
 
+        <button
+          type="button"
+          onClick={() => setShowAgendaModal(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.875rem',
+            padding: '1rem',
+            marginTop: '0.75rem',
+            width: '100%',
+            textAlign: 'left',
+            border: 'none',
+            borderRadius: '12px',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 1px 3px rgba(15,76,92,0.08)',
+            cursor: 'pointer',
+          }}
+          className="card"
+        >
+          <div style={iconCircle('#0f4c5c')}>
+            <Icon name="calendar" color="#0f4c5c" />
+          </div>
+          <div>
+            <div className="card-title" style={{ fontSize: '0.9375rem' }}>Agendar cita</div>
+            <div className="card-meta">Reserva tu consulta con el Dr. Rogelio</div>
+          </div>
+        </button>
+
+        {showAgendaModal && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(21,46,68,0.5)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={() => setShowAgendaModal(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: '#ffffff',
+                borderTopLeftRadius: '20px',
+                borderTopRightRadius: '20px',
+                padding: '1.5rem 1.25rem',
+                paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+                width: '100%',
+                maxWidth: '480px',
+              }}
+            >
+              <div style={{ fontSize: '1.0625rem', fontWeight: 700, color: '#152E44', marginBottom: '0.375rem' }}>
+                ¿Dónde te encuentras?
+              </div>
+              <p className="card-meta" style={{ marginBottom: '1.25rem' }}>
+                Las citas presenciales son en la sucursal de Polanco, Ciudad de México. Si no estás en CDMX, puedes solicitar una videollamada.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleMiadmon}
+                className="btn btn-primary"
+                style={{ width: '100%', marginBottom: '0.75rem' }}
+              >
+                Estoy en CDMX — agendar cita
+              </button>
+              <button
+                type="button"
+                onClick={handleWhatsApp}
+                className="btn btn-secondary"
+                style={{ width: '100%' }}
+              >
+                No estoy en CDMX — solicitar videollamada por WhatsApp
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="section-label" style={{ marginTop: '1.5rem' }}>Registrar</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
           {ACCIONES.map((a) => (
@@ -265,4 +362,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-            }
+      }
