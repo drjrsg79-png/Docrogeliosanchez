@@ -97,4 +97,31 @@ export default function Register() {
               <label>Nombre completo</label>
               <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             </div>
-            <div cla
+            <div className="field">
+              <label>Telefono</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Correo electronico</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Contrasena</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
+              {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+            </button>
+          </form>
+        )}
+
+        <p className="page-subtitle" style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          Ya tienes cuenta? <Link to="/login">Inicia sesion</Link>
+        </p>
+      </div>
+    </div>
+  )
+}
