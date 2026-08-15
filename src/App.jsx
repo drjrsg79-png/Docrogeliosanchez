@@ -12,6 +12,7 @@ import WaterLog from './pages/WaterLog'
 import ExerciseRoutine from './pages/ExerciseRoutine'
 import DietPlan from './pages/DietPlan'
 import MedicalHistory from './pages/MedicalHistory'
+import AIChat from './pages/AIChat'
 
 function Home() {
   return (
@@ -100,6 +101,7 @@ function App() {
       <Route path="/rutina" element={<ExerciseRoutine />} />
       <Route path="/dieta" element={<DietPlan />} />
       <Route path="/antecedentes" element={<MedicalHistory />} />
+      <Route path="/chat" element={<AIChat />} />
     </Routes>
   )
 }
