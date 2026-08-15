@@ -62,18 +62,18 @@ export default function Register() {
     if (data.session) {
       navigate('/dashboard')
     } else {
-      setConfirmMessage('Tu cuenta se creó correctamente. Revisa tu correo para confirmar tu registro antes de iniciar sesión.')
+      setConfirmMessage('Tu cuenta se creo correctamente. Revisa tu correo para confirmar tu registro antes de iniciar sesion.')
     }
   }
 
   return (
     <div className="page">
       <div className="header">
-        <div className="header-title">Dr. Rogelio Sánchez</div>
+        <div className="header-title">Dr. Rogelio Sanchez</div>
       </div>
 
       <div className="container" style={{ maxWidth: '480px', margin: '0 auto' }}>
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Qué puedes hacer aquí</div>
+        <div className="section-label" style={{ marginTop: '1.5rem' }}>Que puedes hacer aqui</div>
         {BENEFICIOS.map((b) => (
           <div key={b.titulo} className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
             <div className="card-title" style={{ fontSize: '0.9375rem' }}>{b.titulo}</div>
@@ -82,13 +82,13 @@ export default function Register() {
         ))}
 
         <p className="card-meta" style={{ textAlign: 'center', margin: '1.25rem 0' }}>
-          Entre más completa tu información, más precisas serán tus recomendaciones.
+          Entre mas completa tu informacion, mas precisas seran tus recomendaciones.
         </p>
       </div>
 
       <div className="auth-container" style={{ margin: '0 auto 3rem', paddingTop: 0 }}>
         <h1 className="page-title">Crear cuenta</h1>
-        <p className="page-subtitle">Regístrate para comenzar tu seguimiento clínico.</p>
+        <p className="page-subtitle">Registrate para comenzar tu seguimiento clinico.</p>
         {confirmMessage ? (
           <div className="card">{confirmMessage}</div>
         ) : (
@@ -97,24 +97,4 @@ export default function Register() {
               <label>Nombre completo</label>
               <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             </div>
-            <div className="field">
-              <label>Teléfono (WhatsApp)</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ej. 5512345678" />
-            </div>
-            <div className="field">
-              <label>Correo electrónico</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="field">
-              <label>Contraseña</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-            </div>
-            {error && <div className="alert-error">{error}</div>}
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ boxShadow: '0 2px 8px rgba(15,76,92,0.28)' }}>
-              {loading ? 'Creando cuenta...' : 'Registrarme'}
-            </button>
-          </form>
-        )}
-        <p className="footer-link">
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-        </p>
+            <div cla
