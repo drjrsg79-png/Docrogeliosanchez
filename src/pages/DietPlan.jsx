@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import { supabase } from '../lib/supabase'
+import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addFootersToAllPages } from '../lib/pdfStyle'
 
 export default function DietPlan() {
   const [profile, setProfile] = useState(null)
@@ -71,44 +72,26 @@ export default function DietPlan() {
   function handleDownloadPdf() {
     if (!plan) return
     const doc = new jsPDF()
-    let y = 20
 
-    doc.setFontSize(16)
-    doc.text('Plan de alimentación semanal', 14, y)
-    y += 8
-    doc.setFontSize(10)
-    doc.text(profile?.full_name || '', 14, y)
-    y += 6
-    doc.text(`${plan.calorias_diarias} kcal/día · ${plan.carbohidratos_g}g carb · ${plan.proteina_g}g prot · ${plan.grasas_g}g grasa`, 14, y)
-    y += 10
+    let y = newStyledPdf(doc, 'Plan de alimentación', 'Plan semanal personalizado', profile?.full_name)
 
-    const resumenLines = doc.splitTextToSize(plan.resumen || '', 180)
-    doc.text(resumenLines, 14, y)
-    y += resumenLines.length * 5 + 6
+    const macros = `${plan.calorias_diarias} kcal/día  ·  ${plan.carbohidratos_g}g carbohidratos  ·  ${plan.proteina_g}g proteína  ·  ${plan.grasas_g}g grasa`
+    const resumenLines = [...doc.splitTextToSize(plan.resumen || '', 175), '', macros]
+    y = addSectionBox(doc, y, resumenLines)
 
     plan.dias?.forEach((dia) => {
-      if (y > 250) { doc.addPage(); y = 20 }
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.text(dia.dia, 14, y)
-      y += 6
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(10)
+      y = checkPageBreak(doc, y, 20)
+      y = addDayHeader(doc, y, dia.dia)
+
       dia.comidas?.forEach((c) => {
-        if (y > 270) { doc.addPage(); y = 20 }
-        doc.text(`• ${c.tipo}: ${c.platillo} (${c.calorias} kcal)`, 16, y)
-        y += 5
-        if (c.descripcion) {
-          const descLines = doc.splitTextToSize(c.descripcion, 170)
-          doc.setFontSize(9)
-          doc.text(descLines, 20, y)
-          y += descLines.length * 4.5
-          doc.setFontSize(10)
-        }
+        y = checkPageBreak(doc, y, 18)
+        const meta = `${c.calorias} kcal · ${c.carbohidratos_g}g carb · ${c.proteina_g}g prot · ${c.grasas_g}g grasa`
+        y = addItemLine(doc, y, `${c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1)}: ${c.platillo}`, meta, c.descripcion)
       })
-      y += 4
+      y += 3
     })
 
+    addFootersToAllPages(doc)
     doc.save('plan-alimentacion.pdf')
   }
 
