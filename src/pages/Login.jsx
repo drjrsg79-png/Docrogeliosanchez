@@ -72,6 +72,9 @@ export default function Login() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+        <p className="footer-link" style={{ marginBottom: '0.5rem' }}>
+          <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+        </p>
         <p className="footer-link">
           ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
         </p>
