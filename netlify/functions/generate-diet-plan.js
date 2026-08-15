@@ -14,9 +14,11 @@ Genera un plan de alimentacion semanal (7 dias) para un paciente con estas carac
 
 Usa platillos con ingredientes accesibles en Mexico. Prioriza bajo indice glucemico, control de porciones y variedad.
 
+IMPORTANTE: se breve. Cada "descripcion" debe tener MAXIMO 10 palabras. El "resumen" general debe tener MAXIMO 2 frases cortas.
+
 Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown, con esta forma exacta:
 {
-  "resumen": "explicacion breve de 2-3 frases sobre el enfoque nutricional de este plan",
+  "resumen": "explicacion muy breve, maximo 2 frases",
   "calorias_diarias": numero entero,
   "carbohidratos_g": numero entero,
   "proteina_g": numero entero,
@@ -25,12 +27,12 @@ Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown, con e
     {
       "dia": "Lunes",
       "comidas": [
-        { "tipo": "desayuno", "platillo": "nombre del platillo", "descripcion": "breve descripcion o ingredientes", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
+        { "tipo": "desayuno", "platillo": "nombre corto del platillo", "descripcion": "maximo 10 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
       ]
     }
   ]
 }
-El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: desayuno, comida, cena y una colacion.`
+El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: desayuno, comida, cena y una colacion. Se conciso en todo el texto para responder rapido.`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -41,9 +43,9 @@ El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 4000,
+        max_tokens: 2500,
         system: systemPrompt,
-        messages: [{ role: 'user', content: 'Genera el plan semanal solicitado, solo el JSON.' }],
+        messages: [{ role: 'user', content: 'Genera el plan semanal solicitado, solo el JSON, se breve y conciso.' }],
       }),
     })
 
