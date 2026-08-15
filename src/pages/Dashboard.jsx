@@ -225,8 +225,8 @@ export default function Dashboard() {
               <Icon name="chat" color="#ffffff" />
             </div>
             <div>
-              <div className="card-title" style={{ color: '#ffffff', fontSize: '0.9375rem' }}>Asistente médico virtual</div>
-              <div className="card-meta" style={{ color: 'rgba(255,255,255,0.75)' }}>Pregunta sobre nutrición, ejercicio o tu diabetes</div>
+              <div className="card-title" style={{ color: '#ffffff', fontSize: '0.9375rem' }}>Mi asistente</div>
+              <div className="card-meta" style={{ color: 'rgba(255,255,255,0.75)' }}>Pregunta lo que necesites sobre tu salud</div>
             </div>
           </div>
         </a>
@@ -265,4 +265,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-}
+            }
