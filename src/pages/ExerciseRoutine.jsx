@@ -3,6 +3,36 @@ import { useNavigate, Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import { supabase } from '../lib/supabase'
 import FootCareWarning from '../components/FootCareWarning'
+import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addVideoLink, addFootersToAllPages } from '../lib/pdfStyle'
+
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+async function fetchJsonSafe(url, body, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const text = await res.text()
+      if (!text) throw new Error('Respuesta vacía del servidor')
+      const data = JSON.parse(text)
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Error del servidor')
+      }
+      return { data, ok: true }
+    } catch (err) {
+      if (attempt === retries) {
+        return { error: err.message || 'No se pudo completar la solicitud', ok: false }
+      }
+    }
+  }
+}
+
+function youtubeSearchUrl(query) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
+}
 
 export default function ExerciseRoutine() {
   const [profile, setProfile] = useState(null)
@@ -11,6 +41,7 @@ export default function ExerciseRoutine() {
   const [routine, setRoutine] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
@@ -34,70 +65,74 @@ export default function ExerciseRoutine() {
     setError('')
     setRoutine(null)
 
-    try {
-      const response = await fetch('/.netlify/functions/generate-exercise-routine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conditionNotes, goal }),
-      })
-      const result = await response.json()
-      if (!response.ok || result.error) {
-        setError(result.error || 'No se pudo generar la rutina.')
-      } else {
-        setRoutine(result)
-      }
-    } catch {
-      setError('No se pudo generar la rutina. Verifica tu conexión.')
+    setProgress('Analizando tu condición y objetivo...')
+    const summaryResult = await fetchJsonSafe('/.netlify/functions/generate-exercise-summary', { conditionNotes, goal })
+
+    if (!summaryResult.ok) {
+      setError(`No se pudo generar el resumen: ${summaryResult.error}. Intenta de nuevo.`)
+      setGenerating(false)
+      setProgress('')
+      return
     }
+
+    const summary = summaryResult.data
+    const dias = []
+
+    for (let i = 0; i < DIAS.length; i++) {
+      const diaNombre = DIAS[i]
+      setProgress(`Generando ${diaNombre} (día ${i + 1} de 7)...`)
+
+      const dayResult = await fetchJsonSafe('/.netlify/functions/generate-exercise-day', {
+        day: diaNombre,
+        conditionNotes,
+        goal,
+      })
+
+      if (!dayResult.ok) {
+        setError(`Se generaron ${i} de 7 días. Falló ${diaNombre}: ${dayResult.error}. Puedes intentar de nuevo.`)
+        setGenerating(false)
+        setProgress('')
+        return
+      }
+
+      dias.push({ dia: diaNombre, ejercicios: dayResult.data.ejercicios })
+      setRoutine({ ...summary, dias: [...dias] })
+    }
+
+    setProgress('')
     setGenerating(false)
   }
 
   function handleDownloadPdf() {
     if (!routine) return
     const doc = new jsPDF()
-    let y = 20
 
-    doc.setFontSize(16)
-    doc.text('Rutina de ejercicio semanal', 14, y)
-    y += 8
-    doc.setFontSize(10)
-    doc.text(profile?.full_name || '', 14, y)
-    y += 10
+    let y = newStyledPdf(doc, 'Rutina de ejercicio', 'Plan semanal personalizado', profile?.full_name)
 
-    doc.setFontSize(10)
-    const resumenLines = doc.splitTextToSize(routine.resumen || '', 180)
-    doc.text(resumenLines, 14, y)
-    y += resumenLines.length * 5 + 6
+    const resumenLines = doc.splitTextToSize(routine.resumen || '', 175)
+    y = addSectionBox(doc, y, resumenLines)
 
     routine.dias?.forEach((dia) => {
-      if (y > 260) { doc.addPage(); y = 20 }
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.text(dia.dia, 14, y)
-      y += 6
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(10)
+      y = checkPageBreak(doc, y, 20)
+      y = addDayHeader(doc, y, dia.dia)
+
       dia.ejercicios?.forEach((ej) => {
-        if (y > 270) { doc.addPage(); y = 20 }
-        doc.text(`• ${ej.nombre} — ${ej.series_repeticiones}`, 16, y)
-        y += 5
-        if (ej.notas) {
-          const notaLines = doc.splitTextToSize(ej.notas, 170)
-          doc.setFontSize(9)
-          doc.text(notaLines, 20, y)
-          y += notaLines.length * 4.5
-          doc.setFontSize(10)
+        y = checkPageBreak(doc, y, 22)
+        y = addItemLine(doc, y, `${ej.nombre} — ${ej.series_repeticiones}`, null, ej.notas)
+        if (ej.busqueda_video && ej.busqueda_video !== 'null') {
+          y = addVideoLink(doc, y, ej.busqueda_video)
         }
       })
-      y += 4
+      y += 3
     })
 
+    addFootersToAllPages(doc)
     doc.save('rutina-ejercicio.pdf')
   }
 
   function handleWhatsAppShare() {
     if (!routine) return
-    const resumen = `Rutina de ejercicio semanal - ${profile?.full_name || ''}\n\n${routine.resumen}\n\nDescargué el PDF completo con el detalle de cada día. Te lo comparto.`
+    const resumen = `Rutina de ejercicio semanal - ${profile?.full_name || ''}\n\n${routine.resumen}\n\nDescargué el PDF completo con el detalle de cada día y videos de apoyo. Te lo comparto.`
     const url = `https://wa.me/?text=${encodeURIComponent(resumen)}`
     window.open(url, '_blank')
   }
@@ -120,6 +155,9 @@ export default function ExerciseRoutine() {
 
         <div className="card">
           <div className="section-label" style={{ marginBottom: '1rem' }}>Generar rutina personalizada</div>
+          <p className="card-meta" style={{ marginBottom: '1rem' }}>
+            La rutina se genera día por día para garantizar mayor precisión. El proceso completo toma aproximadamente 1 minuto — no cierres esta pantalla mientras se genera.
+          </p>
           <form onSubmit={handleGenerate}>
             <div className="field">
               <label>¿Tienes alguna condición o lesión actual?</label>
@@ -140,7 +178,7 @@ export default function ExerciseRoutine() {
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={generating}>
-              {generating ? 'Generando rutina...' : 'Generar rutina'}
+              {generating ? (progress || 'Generando...') : 'Generar rutina'}
             </button>
           </form>
         </div>
@@ -151,14 +189,16 @@ export default function ExerciseRoutine() {
           <>
             <div className="card">
               <div className="card-meta">{routine.resumen}</div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <button onClick={handleDownloadPdf} className="btn btn-secondary" style={{ flex: 1 }}>
-                  Descargar PDF
-                </button>
-                <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ flex: 1 }}>
-                  Compartir por WhatsApp
-                </button>
-              </div>
+              {!generating && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                  <button onClick={handleDownloadPdf} className="btn btn-secondary" style={{ flex: 1 }}>
+                    Descargar PDF
+                  </button>
+                  <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ flex: 1 }}>
+                    Compartir por WhatsApp
+                  </button>
+                </div>
+              )}
             </div>
 
             {routine.dias?.map((dia) => (
@@ -168,6 +208,16 @@ export default function ExerciseRoutine() {
                   <div key={i} style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: i > 0 ? '1px solid #dde3e6' : 'none' }}>
                     <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{ej.nombre} — {ej.series_repeticiones}</div>
                     {ej.notas && <div className="card-meta">{ej.notas}</div>}
+                    {ej.busqueda_video && ej.busqueda_video !== 'null' && (
+                      <a
+                        href={youtubeSearchUrl(ej.busqueda_video)}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: '0.8125rem', color: '#0f4c5c', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}
+                      >
+                        ▶ Ver video de referencia
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
@@ -177,4 +227,4 @@ export default function ExerciseRoutine() {
       </div>
     </div>
   )
-}
+                  }
