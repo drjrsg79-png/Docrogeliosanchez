@@ -70,6 +70,8 @@ export default function MedicalHistory() {
     )
   }
 
+  const noTieneDiabetes = diabetesType === 'ninguna'
+
   async function handleSave(e) {
     e.preventDefault()
     setSaving(true)
@@ -79,12 +81,12 @@ export default function MedicalHistory() {
       .from('profiles')
       .update({
         diabetes_type: diabetesType,
-        diagnosis_year: diagnosisYear ? parseInt(diagnosisYear, 10) : null,
-        last_hba1c: lastHba1c ? parseFloat(lastHba1c) : null,
-        last_hba1c_date: lastHba1cDate || null,
+        diagnosis_year: noTieneDiabetes ? null : diagnosisYear ? parseInt(diagnosisYear, 10) : null,
+        last_hba1c: noTieneDiabetes ? null : lastHba1c ? parseFloat(lastHba1c) : null,
+        last_hba1c_date: noTieneDiabetes ? null : lastHba1cDate || null,
         current_medications: currentMedications,
-        uses_insulin: usesInsulin,
-        insulin_type: usesInsulin ? insulinType : null,
+        uses_insulin: noTieneDiabetes ? false : usesInsulin,
+        insulin_type: !noTieneDiabetes && usesInsulin ? insulinType : null,
         complications,
         allergies,
         family_history: familyHistory,
@@ -119,43 +121,53 @@ export default function MedicalHistory() {
               <label>Tipo de diabetes</label>
               <select value={diabetesType} onChange={(e) => setDiabetesType(e.target.value)}>
                 <option value="">Selecciona una opción</option>
+                <option value="ninguna">No tengo diabetes</option>
                 <option value="tipo_1">Tipo 1</option>
                 <option value="tipo_2">Tipo 2</option>
                 <option value="gestacional">Gestacional</option>
                 <option value="prediabetes">Prediabetes</option>
               </select>
             </div>
-            <div className="field">
-              <label>Año de diagnóstico</label>
-              <input type="number" value={diagnosisYear} onChange={(e) => setDiagnosisYear(e.target.value)} placeholder="Ej. 2018" />
-            </div>
-            <div className="field">
-              <label>Última HbA1c (%)</label>
-              <input type="number" step="0.1" value={lastHba1c} onChange={(e) => setLastHba1c(e.target.value)} placeholder="Ej. 7.2" />
-            </div>
-            <div className="field">
-              <label>Fecha de esa medición</label>
-              <input type="date" value={lastHba1cDate} onChange={(e) => setLastHba1cDate(e.target.value)} />
-            </div>
+
+            {!noTieneDiabetes && (
+              <>
+                <div className="field">
+                  <label>Año de diagnóstico</label>
+                  <input type="number" value={diagnosisYear} onChange={(e) => setDiagnosisYear(e.target.value)} placeholder="Ej. 2018" />
+                </div>
+                <div className="field">
+                  <label>Última HbA1c (%)</label>
+                  <input type="number" step="0.1" value={lastHba1c} onChange={(e) => setLastHba1c(e.target.value)} placeholder="Ej. 7.2" />
+                </div>
+                <div className="field">
+                  <label>Fecha de esa medición</label>
+                  <input type="date" value={lastHba1cDate} onChange={(e) => setLastHba1cDate(e.target.value)} />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="card">
             <div className="section-label" style={{ marginBottom: '1rem' }}>Tratamiento actual</div>
             <div className="field">
-              <label>Medicamentos orales actuales</label>
+              <label>Medicamentos actuales</label>
               <textarea value={currentMedications} onChange={(e) => setCurrentMedications(e.target.value)} rows={3} placeholder="Ej. Metformina 850mg cada 12 horas" />
             </div>
-            <div className="field">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" checked={usesInsulin} onChange={(e) => setUsesInsulin(e.target.checked)} style={{ width: 'auto' }} />
-                Usa insulina
-              </label>
-            </div>
-            {usesInsulin && (
-              <div className="field">
-                <label>Tipo y dosis de insulina</label>
-                <input type="text" value={insulinType} onChange={(e) => setInsulinType(e.target.value)} placeholder="Ej. NPH 20 UI mañana, 10 UI noche" />
-              </div>
+            {!noTieneDiabetes && (
+              <>
+                <div className="field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" checked={usesInsulin} onChange={(e) => setUsesInsulin(e.target.checked)} style={{ width: 'auto' }} />
+                    Usa insulina
+                  </label>
+                </div>
+                {usesInsulin && (
+                  <div className="field">
+                    <label>Tipo y dosis de insulina</label>
+                    <input type="text" value={insulinType} onChange={(e) => setInsulinType(e.target.value)} placeholder="Ej. NPH 20 UI mañana, 10 UI noche" />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -211,4 +223,4 @@ export default function MedicalHistory() {
       </div>
     </div>
   )
-      }
+}
