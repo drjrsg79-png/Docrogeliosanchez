@@ -14,13 +14,11 @@ export default function DoctorPanel() {
         navigate('/login')
         return
       }
-
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'patient')
         .order('full_name')
-
       setPatients(data || [])
       setLoading(false)
     }
@@ -32,23 +30,32 @@ export default function DoctorPanel() {
     navigate('/login')
   }
 
-  if (loading) return <div style={{ padding: '2rem' }}>Cargando...</div>
+  if (loading) return <div className="container">Cargando...</div>
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Panel médico</h1>
-      <p>{patients.length} pacientes registrados</p>
-      <button onClick={handleLogout} style={{ margin: '1rem 0', padding: '0.5rem 1rem' }}>
-        Cerrar sesión
-      </button>
-      <div style={{ marginTop: '1rem' }}>
-        {patients.length === 0 && <p>Aún no hay pacientes registrados.</p>}
+    <div className="page">
+      <div className="header">
+        <div className="header-title">Panel médico</div>
+        <div className="header-subtitle">{patients.length} pacientes registrados</div>
+      </div>
+
+      <div className="container" style={{ flex: 1 }}>
+        <div className="section-label">Pacientes</div>
+
+        {patients.length === 0 && (
+          <div className="empty-state">Aún no hay pacientes registrados.</div>
+        )}
+
         {patients.map((p) => (
-          <div key={p.id} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', marginBottom: '0.5rem' }}>
-            <strong>{p.full_name || 'Sin nombre'}</strong>
-            {p.diabetes_type && <p>Tipo: {p.diabetes_type}</p>}
+          <div key={p.id} className="card">
+            <div className="card-title">{p.full_name || 'Sin nombre'}</div>
+            {p.diabetes_type && <div className="card-meta">Tipo de diabetes: {p.diabetes_type}</div>}
           </div>
         ))}
+
+        <button onClick={handleLogout} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
+          Cerrar sesión
+        </button>
       </div>
     </div>
   )
