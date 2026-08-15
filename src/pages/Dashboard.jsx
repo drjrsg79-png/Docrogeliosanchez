@@ -9,18 +9,42 @@ function startOfToday() {
   return d
 }
 
+function Icon({ name, color }) {
+  const common = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (name) {
+    case 'drop':
+      return <svg {...common}><path d="M12 2c4 5 7 8.5 7 12.5A7 7 0 1 1 5 14.5C5 10.5 8 7 12 2Z" /></svg>
+    case 'scale':
+      return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2.5" /></svg>
+    case 'fork':
+      return <svg {...common}><path d="M7 2v8M9 2v8M7 6h2M7 10v12M17 2c-1.5 0-2.5 1.5-2.5 4s1 4 2.5 4v10" /></svg>
+    case 'run':
+      return <svg {...common}><circle cx="15" cy="5" r="2" /><path d="M13 9l-3 3 2 3-2 6M13 9l4 2 3-2M10 12l-4 1v5" /></svg>
+    case 'glass':
+      return <svg {...common}><path d="M6 3h12l-1.5 17a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1L6 3Z" /><path d="M6.7 8h10.6" /></svg>
+    case 'notes':
+      return <svg {...common}><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h4" /></svg>
+    case 'dumbbell':
+      return <svg {...common}><path d="M4 9v6M20 9v6M7 7v10M17 7v10M2 12h3M19 12h3M7 12h10" /></svg>
+    case 'clipboard':
+      return <svg {...common}><rect x="6" y="4" width="12" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M9 11h6M9 15h6" /></svg>
+    default:
+      return null
+  }
+}
+
 const ACCIONES = [
-  { href: '/glucosa', label: 'Glucosa' },
-  { href: '/peso', label: 'Peso' },
-  { href: '/comidas', label: 'Comidas' },
-  { href: '/ejercicio', label: 'Ejercicio' },
-  { href: '/agua', label: 'Agua' },
-  { href: '/antecedentes', label: 'Antecedentes' },
+  { href: '/glucosa', label: 'Glucosa', icon: 'drop', color: '#b3261e' },
+  { href: '/peso', label: 'Peso', icon: 'scale', color: '#0f4c5c' },
+  { href: '/comidas', label: 'Comidas', icon: 'fork', color: '#a15c00' },
+  { href: '/ejercicio', label: 'Ejercicio', icon: 'run', color: '#1e6b3c' },
+  { href: '/agua', label: 'Agua', icon: 'glass', color: '#1565c0' },
+  { href: '/antecedentes', label: 'Antecedentes', icon: 'notes', color: '#5c6b73' },
 ]
 
 const PLANES = [
-  { href: '/rutina', label: 'Rutina de ejercicio' },
-  { href: '/dieta', label: 'Plan de alimentación' },
+  { href: '/rutina', label: 'Rutina de ejercicio', icon: 'dumbbell', color: '#1e6b3c' },
+  { href: '/dieta', label: 'Plan de alimentación', icon: 'clipboard', color: '#a15c00' },
 ]
 
 export default function Dashboard() {
@@ -96,6 +120,26 @@ export default function Dashboard() {
   const semaforo = porcentajeMeta < 90 ? '#1e6b3c' : porcentajeMeta <= 105 ? '#a15c00' : '#b3261e'
   const antecedentesIncompletos = !profile?.diagnosis_year && !profile?.diabetes_type
 
+  const gridItemStyle = {
+    marginBottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.875rem 1rem',
+    boxShadow: '0 1px 3px rgba(15,76,92,0.08)',
+  }
+
+  const iconCircle = (color) => ({
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    backgroundColor: `${color}18`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  })
+
   return (
     <div className="page">
       <div className="header">
@@ -115,7 +159,7 @@ export default function Dashboard() {
 
         <div className="section-label">Hoy</div>
 
-        <div className="card">
+        <div className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: semaforo }}>{caloriesIn} kcal</div>
@@ -133,8 +177,11 @@ export default function Dashboard() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: '0.8125rem' }}>Glucosa</div>
+          <div className="card" style={{ marginBottom: 0, boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+              <Icon name="drop" color="#b3261e" />
+              <div className="card-title" style={{ fontSize: '0.8125rem' }}>Glucosa</div>
+            </div>
             {latestGlucose ? (
               <div className="card-meta">{latestGlucose.value_mg_dl} mg/dL</div>
             ) : (
@@ -151,8 +198,11 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: '0.8125rem' }}>Agua</div>
+          <div className="card" style={{ marginBottom: 0, boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+              <Icon name="glass" color="#1565c0" />
+              <div className="card-title" style={{ fontSize: '0.8125rem' }}>Agua</div>
+            </div>
             <div className="card-meta">{waterToday} ml hoy</div>
           </div>
         </div>
@@ -161,7 +211,10 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
           {ACCIONES.map((a) => (
             <a key={a.href} href={a.href} style={{ textDecoration: 'none' }}>
-              <div className="card" style={{ marginBottom: 0, textAlign: 'center', padding: '1rem 0.75rem' }}>
+              <div className="card" style={gridItemStyle}>
+                <div style={iconCircle(a.color)}>
+                  <Icon name={a.icon} color={a.color} />
+                </div>
                 <div className="card-title" style={{ fontSize: '0.875rem' }}>{a.label}</div>
               </div>
             </a>
@@ -172,8 +225,11 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           {PLANES.map((p) => (
             <a key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
-              <div className="card" style={{ marginBottom: 0, textAlign: 'center', padding: '1rem 0.75rem' }}>
-                <div className="card-title" style={{ fontSize: '0.875rem' }}>{p.label}</div>
+              <div className="card" style={gridItemStyle}>
+                <div style={iconCircle(p.color)}>
+                  <Icon name={p.icon} color={p.color} />
+                </div>
+                <div className="card-title" style={{ fontSize: '0.8125rem' }}>{p.label}</div>
               </div>
             </a>
           ))}
@@ -185,4 +241,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-}
+                           }
