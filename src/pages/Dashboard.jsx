@@ -14,11 +14,7 @@ export default function Dashboard() {
         navigate('/login')
         return
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(data)
       setLoading(false)
     }
@@ -74,6 +70,22 @@ export default function Dashboard() {
           <div className="card">
             <div className="card-title">Agua</div>
             <div className="card-meta">Registra tu hidratación diaria</div>
+          </div>
+        </a>
+
+        <div className="section-label" style={{ marginTop: '1.5rem' }}>Planes personalizados</div>
+
+        <a href="/rutina" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Rutina de ejercicio</div>
+            <div className="card-meta">Genera tu plan semanal con IA</div>
+          </div>
+        </a>
+
+        <a href="/dieta" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Plan de alimentación</div>
+            <div className="card-meta">Genera tu plan semanal con IA</div>
           </div>
         </a>
 
