@@ -4,12 +4,15 @@ import jsPDF from 'jspdf'
 import { supabase } from '../lib/supabase'
 import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addFootersToAllPages } from '../lib/pdfStyle'
 
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
 export default function DietPlan() {
   const [profile, setProfile] = useState(null)
   const [goal, setGoal] = useState('')
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
@@ -46,7 +49,8 @@ export default function DietPlan() {
     setPlan(null)
 
     try {
-      const response = await fetch('/.netlify/functions/generate-diet-plan', {
+      setProgress('Calculando tus metas nutricionales...')
+      const summaryRes = await fetch('/.netlify/functions/generate-diet-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,12 +61,39 @@ export default function DietPlan() {
           weightGoal: profile?.weight_goal_kg,
         }),
       })
-      const result = await response.json()
-      if (!response.ok || result.error) {
-        setError((result.error || 'No se pudo generar el plan.') + (result.rawPreview ? ' — Vista previa: ' + result.rawPreview : ''))
-      } else {
-        setPlan(result)
+      const summary = await summaryRes.json()
+      if (!summaryRes.ok || summary.error) {
+        setError(summary.error || 'No se pudo generar el resumen.')
+        setGenerating(false)
+        return
       }
+
+      const dias = []
+      for (let i = 0; i < DIAS.length; i++) {
+        const diaNombre = DIAS[i]
+        setProgress(`Generando ${diaNombre} (${i + 1}/7)...`)
+
+        const dayRes = await fetch('/.netlify/functions/generate-diet-day', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day: diaNombre,
+            goal,
+            diabetesType: profile?.diabetes_type,
+            caloriasDiarias: summary.calorias_diarias,
+          }),
+        })
+        const dayData = await dayRes.json()
+        if (!dayRes.ok || dayData.error) {
+          setError(`No se pudo generar ${diaNombre}. Intenta de nuevo.`)
+          setGenerating(false)
+          return
+        }
+        dias.push({ dia: diaNombre, comidas: dayData.comidas })
+        setPlan({ ...summary, dias: [...dias] })
+      }
+
+      setProgress('')
     } catch {
       setError('No se pudo generar el plan. Verifica tu conexión.')
     }
@@ -129,7 +160,7 @@ export default function DietPlan() {
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={generating}>
-              {generating ? 'Generando plan...' : 'Generar plan'}
+              {generating ? (progress || 'Generando...') : 'Generar plan'}
             </button>
           </form>
         </div>
@@ -143,14 +174,16 @@ export default function DietPlan() {
               <div className="card-meta" style={{ marginTop: '0.5rem', fontWeight: 600 }}>
                 {plan.calorias_diarias} kcal/día · {plan.carbohidratos_g}g carb · {plan.proteina_g}g prot · {plan.grasas_g}g grasa
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <button onClick={handleDownloadPdf} className="btn btn-secondary" style={{ flex: 1 }}>
-                  Descargar PDF
-                </button>
-                <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ flex: 1 }}>
-                  Compartir por WhatsApp
-                </button>
-              </div>
+              {!generating && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                  <button onClick={handleDownloadPdf} className="btn btn-secondary" style={{ flex: 1 }}>
+                    Descargar PDF
+                  </button>
+                  <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ flex: 1 }}>
+                    Compartir por WhatsApp
+                  </button>
+                </div>
+              )}
             </div>
 
             {plan.dias?.map((dia) => (
@@ -170,4 +203,4 @@ export default function DietPlan() {
       </div>
     </div>
   )
-              }
+      }
