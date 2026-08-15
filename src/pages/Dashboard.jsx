@@ -10,18 +10,15 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         navigate('/login')
         return
       }
-
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
-
       setProfile(data)
       setLoading(false)
     }
@@ -33,15 +30,44 @@ export default function Dashboard() {
     navigate('/login')
   }
 
-  if (loading) return <div style={{ padding: '2rem' }}>Cargando...</div>
+  if (loading) return <div className="container">Cargando...</div>
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Hola, {profile?.full_name || 'paciente'}</h1>
-      <p>Este es tu espacio de orientación y seguimiento.</p>
-      <button onClick={handleLogout} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>
-        Cerrar sesión
-      </button>
+    <div className="page">
+      <div className="header">
+        <div className="header-title">{profile?.full_name || 'Paciente'}</div>
+        <div className="header-subtitle">Panel de seguimiento</div>
+      </div>
+
+      <div className="container" style={{ flex: 1 }}>
+        <div className="section-label">Seguimiento</div>
+
+        <a href="/glucosa" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Glucosa</div>
+            <div className="card-meta">Registra y consulta tus mediciones</div>
+          </div>
+        </a>
+
+        <div className="card" style={{ opacity: 0.6 }}>
+          <div className="card-title">Comidas</div>
+          <div className="card-meta">Próximamente</div>
+        </div>
+
+        <div className="card" style={{ opacity: 0.6 }}>
+          <div className="card-title">Ejercicio</div>
+          <div className="card-meta">Próximamente</div>
+        </div>
+
+        <div className="card" style={{ opacity: 0.6 }}>
+          <div className="card-title">Cuidado de heridas</div>
+          <div className="card-meta">Próximamente</div>
+        </div>
+
+        <button onClick={handleLogout} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   )
 }
