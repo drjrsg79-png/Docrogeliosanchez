@@ -2,6 +2,33 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const BENEFICIOS = [
+  {
+    titulo: 'Seguimiento diario',
+    detalle: 'Registra tu glucosa, peso, comidas, ejercicio y agua en un solo lugar.',
+  },
+  {
+    titulo: 'Alertas automáticas',
+    detalle: 'Te avisamos si tu glucosa está fuera de rango, con recomendaciones claras al momento.',
+  },
+  {
+    titulo: 'Escanea tu comida',
+    detalle: 'Toma una foto de tu platillo y calculamos calorías, macros y si te conviene comerlo.',
+  },
+  {
+    titulo: 'Planes con inteligencia artificial',
+    detalle: 'Genera tu plan de alimentación y rutina de ejercicio semanal, personalizados a tu condición.',
+  },
+  {
+    titulo: 'Descarga y comparte',
+    detalle: 'Exporta tus planes en PDF y compártelos por WhatsApp con quien tú decidas.',
+  },
+  {
+    titulo: 'Tu doctor te acompaña',
+    detalle: 'El Dr. Rogelio Sánchez da seguimiento a tu evolución para ajustar tu tratamiento.',
+  },
+]
+
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,7 +71,22 @@ export default function Register() {
       <div className="header">
         <div className="header-title">Dr. Rogelio Sánchez</div>
       </div>
-      <div className="auth-container">
+
+      <div className="container" style={{ maxWidth: '480px', margin: '0 auto' }}>
+        <div className="section-label" style={{ marginTop: '1.5rem' }}>Qué puedes hacer aquí</div>
+        {BENEFICIOS.map((b) => (
+          <div key={b.titulo} className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
+            <div className="card-title" style={{ fontSize: '0.9375rem' }}>{b.titulo}</div>
+            <div className="card-meta">{b.detalle}</div>
+          </div>
+        ))}
+
+        <p className="card-meta" style={{ textAlign: 'center', margin: '1.25rem 0' }}>
+          Entre más completa tu información, más precisas serán tus recomendaciones.
+        </p>
+      </div>
+
+      <div className="auth-container" style={{ margin: '0 auto 3rem', paddingTop: 0 }}>
         <h1 className="page-title">Crear cuenta</h1>
         <p className="page-subtitle">Regístrate para comenzar tu seguimiento clínico.</p>
         {confirmMessage ? (
@@ -68,7 +110,7 @@ export default function Register() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             {error && <div className="alert-error">{error}</div>}
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ boxShadow: '0 2px 8px rgba(15,76,92,0.28)' }}>
               {loading ? 'Creando cuenta...' : 'Registrarme'}
             </button>
           </form>
@@ -76,7 +118,3 @@ export default function Register() {
         <p className="footer-link">
           ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
         </p>
-      </div>
-    </div>
-  )
-}
