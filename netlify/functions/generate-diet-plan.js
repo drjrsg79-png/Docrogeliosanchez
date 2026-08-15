@@ -14,9 +14,9 @@ Genera un plan de alimentacion semanal (7 dias) para un paciente con estas carac
 
 Usa platillos con ingredientes accesibles en Mexico. Prioriza bajo indice glucemico, control de porciones y variedad.
 
-IMPORTANTE: se breve. Cada "descripcion" debe tener MAXIMO 10 palabras. El "resumen" general debe tener MAXIMO 2 frases cortas.
+IMPORTANTE: se breve. Cada "descripcion" debe tener MAXIMO 8 palabras. El "resumen" general debe tener MAXIMO 2 frases cortas. No agregues texto antes ni despues del JSON, ni marques con backticks.
 
-Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown, con esta forma exacta:
+Responde UNICAMENTE con un JSON valido con esta forma exacta:
 {
   "resumen": "explicacion muy breve, maximo 2 frases",
   "calorias_diarias": numero entero,
@@ -27,12 +27,12 @@ Responde UNICAMENTE con un JSON valido, sin texto adicional, sin markdown, con e
     {
       "dia": "Lunes",
       "comidas": [
-        { "tipo": "desayuno", "platillo": "nombre corto del platillo", "descripcion": "maximo 10 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
+        { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
       ]
     }
   ]
 }
-El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: desayuno, comida, cena y una colacion. Se conciso en todo el texto para responder rapido.`
+El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: desayuno, comida, cena y una colacion.`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -43,7 +43,7 @@ El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 2500,
+        max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: 'user', content: 'Genera el plan semanal solicitado, solo el JSON, se breve y conciso.' }],
       }),
@@ -56,13 +56,23 @@ El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: 
     }
 
     const textContent = data.content?.find((c) => c.type === 'text')?.text || ''
-    const cleaned = textContent.replace(/```json|```/g, '').trim()
+    let cleaned = textContent.replace(/```json|```/g, '').trim()
+
+    const firstBrace = cleaned.indexOf('{')
+    const lastBrace = cleaned.lastIndexOf('}')
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1)
+    }
 
     let parsed
     try {
       parsed = JSON.parse(cleaned)
-    } catch {
-      return new Response(JSON.stringify({ error: 'No se pudo interpretar el plan generado' }), { status: 500 })
+    } catch (parseErr) {
+      return new Response(JSON.stringify({
+        error: 'No se pudo interpretar el plan generado',
+        stopReason: data.stop_reason,
+        rawPreview: cleaned.slice(0, 300),
+      }), { status: 500 })
     }
 
     return new Response(JSON.stringify(parsed), {
