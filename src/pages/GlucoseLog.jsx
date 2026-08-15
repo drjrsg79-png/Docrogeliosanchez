@@ -1,145 +1,47 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
 
-export default function GlucoseLog() {
-  const [readings, setReadings] = useState([])
-  const [value, setValue] = useState('')
-  const [context, setContext] = useState('ayuno')
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [userId, setUserId] = useState(null)
-  const navigate = useNavigate()
+const CONTEXT_OPTIONS = [
+  { value: 'antes_desayuno', label: 'Antes del desayuno' },
+  { value: 'post_desayuno', label: '2 horas después del desayuno' },
+  { value: 'antes_comida', label: 'Antes de la comida' },
+  { value: 'post_comida', label: '2 horas después de la comida' },
+  { value: 'antes_cena', label: 'Antes de la cena' },
+  { value: 'post_cena', label: '2 horas después de la cena' },
+  { value: 'aleatorio', label: 'En otro momento / aleatoria' },
+]
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
+const CONTEXT_LABELS = Object.fromEntries(CONTEXT_OPTIONS.map((o) => [o.value, o.label]))
 
-      const { data } = await supabase
-        .from('glucose_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('measured_at', { ascending: false })
-        .limit(30)
-
-      setReadings(data || [])
-      setLoading(false)
+function evaluarLectura(valor, context) {
+  if (valor < 60) {
+    return {
+      nivel: 'baja',
+      etiqueta: 'Hipoglucemia',
+      color: '#b3261e',
+      fondo: '#fbeceb',
+      mensaje:
+        'Nivel bajo de glucosa. Consume de inmediato 15 g de carbohidratos de absorción rápida (medio vaso de jugo, 3 tabletas de glucosa o una cucharada de azúcar). Repite la medición en 15 minutos. Si persiste por debajo de 60 mg/dL o hay síntomas como sudoración, temblor o confusión, contacta a tu médico o acude a urgencias.',
     }
-    load()
-  }, [navigate])
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!value) return
-    setSaving(true)
-
-    const { data, error } = await supabase
-      .from('glucose_logs')
-      .insert({
-        user_id: userId,
-        value_mg_dl: parseInt(value, 10),
-        context,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setReadings([data, ...readings])
-      setValue('')
-    }
-    setSaving(false)
   }
 
-  const chartData = [...readings]
-    .reverse()
-    .map((r) => ({
-      fecha: new Date(r.measured_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' }),
-      valor: r.value_mg_dl,
-    }))
-
-  const contextLabels = {
-    ayuno: 'En ayuno',
-    post_comida: 'Después de comer',
-    antes_dormir: 'Antes de dormir',
-    otro: 'Otro momento',
+  if (valor > 180) {
+    const esPostprandial = context.startsWith('post_')
+    return {
+      nivel: 'alta',
+      etiqueta: 'Hiperglucemia',
+      color: '#b3261e',
+      fondo: '#fbeceb',
+      mensaje: esPostprandial
+        ? 'Nivel elevado después de comer. Evita azúcares y harinas refinadas en tu siguiente comida, aumenta la ingesta de agua y realiza actividad física ligera si tu condición lo permite. Si se repite de forma constante, coméntalo con tu médico para ajustar tratamiento.'
+        : 'Nivel elevado en ayuno o antes de alimento. Esto puede indicar necesidad de ajuste en tu esquema de tratamiento. Evita comidas altas en carbohidratos simples y mantente bien hidratado. Notifica a tu médico si este patrón se repite.',
+    }
   }
 
-  if (loading) return <div className="container">Cargando...</div>
+  const contextoAyuno = context === 'antes_desayuno' || context === 'antes_comida' || context === 'antes_cena'
+  const rangoIdeal = contextoAyuno ? '70–100 mg/dL' : 'menor a 140 mg/dL'
 
-  return (
-    <div className="page">
-      <div className="header">
-        <div className="header-title">Glucosa</div>
-        <div className="header-subtitle">Registro y tendencia de mediciones</div>
-      </div>
-
-      <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
-        </Link>
-
-        <div className="card">
-          <div className="section-label" style={{ marginBottom: '1rem' }}>Nueva medición</div>
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label>Valor (mg/dL)</label>
-              <input
-                type="number"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Ej. 110"
-                required
-              />
-            </div>
-            <div className="field">
-              <label>Momento de la medición</label>
-              <select value={context} onChange={(e) => setContext(e.target.value)}>
-                <option value="ayuno">En ayuno</option>
-                <option value="post_comida">Después de comer</option>
-                <option value="antes_dormir">Antes de dormir</option>
-                <option value="otro">Otro momento</option>
-              </select>
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar medición'}
-            </button>
-          </form>
-        </div>
-
-        {chartData.length > 1 && (
-          <div className="card">
-            <div className="section-label">Tendencia</div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#dde3e6" />
-                <XAxis dataKey="fecha" fontSize={11} stroke="#5c6b73" />
-                <YAxis fontSize={11} stroke="#5c6b73" />
-                <Tooltip />
-                <Line type="monotone" dataKey="valor" stroke="#0f4c5c" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Historial reciente</div>
-        {readings.length === 0 && (
-          <div className="empty-state">Aún no has registrado mediciones.</div>
-        )}
-        {readings.map((r) => (
-          <div key={r.id} className="card">
-            <div className="card-title">{r.value_mg_dl} mg/dL</div>
-            <div className="card-meta">
-              {contextLabels[r.context] || r.context} · {new Date(r.measured_at).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+  return {
+    nivel: 'normal',
