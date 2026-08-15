@@ -9,6 +9,20 @@ function startOfToday() {
   return d
 }
 
+const ACCIONES = [
+  { href: '/glucosa', label: 'Glucosa' },
+  { href: '/peso', label: 'Peso' },
+  { href: '/comidas', label: 'Comidas' },
+  { href: '/ejercicio', label: 'Ejercicio' },
+  { href: '/agua', label: 'Agua' },
+  { href: '/antecedentes', label: 'Antecedentes' },
+]
+
+const PLANES = [
+  { href: '/rutina', label: 'Rutina de ejercicio' },
+  { href: '/dieta', label: 'Plan de alimentación' },
+]
+
 export default function Dashboard() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -17,8 +31,6 @@ export default function Dashboard() {
   const [waterToday, setWaterToday] = useState(0)
   const [latestGlucose, setLatestGlucose] = useState(null)
   const [glucoseTrend, setGlucoseTrend] = useState([])
-  const [weightTrend, setWeightTrend] = useState([])
-  const [streak, setStreak] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -66,37 +78,6 @@ export default function Dashboard() {
         setGlucoseTrend([...glucoseRecent].reverse().map((g) => ({ valor: g.value_mg_dl })))
       }
 
-      const { data: weightRecent } = await supabase
-        .from('weight_logs')
-        .select('weight_kg, logged_at')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(7)
-      if (weightRecent) {
-        setWeightTrend([...weightRecent].reverse().map((w) => ({ valor: w.weight_kg })))
-      }
-
-      const { data: glucoseDates } = await supabase
-        .from('glucose_logs')
-        .select('measured_at')
-        .eq('user_id', user.id)
-        .order('measured_at', { ascending: false })
-        .limit(60)
-      if (glucoseDates) {
-        const uniqueDays = [...new Set(glucoseDates.map((g) => new Date(g.measured_at).toDateString()))]
-        let count = 0
-        let cursor = new Date()
-        for (const day of uniqueDays) {
-          if (day === cursor.toDateString()) {
-            count++
-            cursor.setDate(cursor.getDate() - 1)
-          } else {
-            break
-          }
-        }
-        setStreak(count)
-      }
-
       setLoading(false)
     }
     load()
@@ -113,7 +94,6 @@ export default function Dashboard() {
   const balance = caloriesIn - caloriesOut
   const porcentajeMeta = Math.min(100, Math.round((caloriesIn / meta) * 100))
   const semaforo = porcentajeMeta < 90 ? '#1e6b3c' : porcentajeMeta <= 105 ? '#a15c00' : '#b3261e'
-
   const antecedentesIncompletos = !profile?.diagnosis_year && !profile?.diabetes_type
 
   return (
@@ -128,7 +108,7 @@ export default function Dashboard() {
           <a href="/antecedentes" style={{ textDecoration: 'none' }}>
             <div className="card" style={{ backgroundColor: '#fdf1e3', borderColor: '#a15c00' }}>
               <div className="card-title" style={{ color: '#a15c00' }}>Completa tus antecedentes médicos</div>
-              <div className="card-meta" style={{ color: '#a15c00' }}>Esto ayuda a personalizar tu seguimiento y tus planes.</div>
+              <div className="card-meta" style={{ color: '#a15c00' }}>Toca aquí para personalizar tu seguimiento.</div>
             </div>
           </a>
         )}
@@ -152,20 +132,16 @@ export default function Dashboard() {
           <div className="card-meta" style={{ marginTop: '0.5rem' }}>Balance neto: {balance >= 0 ? '+' : ''}{balance} kcal</div>
         </div>
 
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div className="card-title">Última glucosa</div>
-              {latestGlucose ? (
-                <div className="card-meta">
-                  {latestGlucose.value_mg_dl} mg/dL · {new Date(latestGlucose.measured_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              ) : (
-                <div className="card-meta">Sin registros aún</div>
-              )}
-            </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div className="card" style={{ marginBottom: 0 }}>
+            <div className="card-title" style={{ fontSize: '0.8125rem' }}>Glucosa</div>
+            {latestGlucose ? (
+              <div className="card-meta">{latestGlucose.value_mg_dl} mg/dL</div>
+            ) : (
+              <div className="card-meta">Sin registros</div>
+            )}
             {glucoseTrend.length > 1 && (
-              <div style={{ width: '80px', height: '36px' }}>
+              <div style={{ width: '100%', height: '28px', marginTop: '0.25rem' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={glucoseTrend}>
                     <Line type="monotone" dataKey="valor" stroke="#0f4c5c" strokeWidth={2} dot={false} />
@@ -174,92 +150,34 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </div>
 
-        <div className="card">
-          <div className="card-title">Agua</div>
-          <div className="card-meta">{waterToday} ml registrados hoy</div>
-        </div>
-
-        {weightTrend.length > 1 && (
-          <div className="card">
-            <div className="card-title">Tendencia de peso (7 registros)</div>
-            <div style={{ width: '100%', height: '50px', marginTop: '0.5rem' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weightTrend}>
-                  <Line type="monotone" dataKey="valor" stroke="#0f4c5c" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="card" style={{ marginBottom: 0 }}>
+            <div className="card-title" style={{ fontSize: '0.8125rem' }}>Agua</div>
+            <div className="card-meta">{waterToday} ml hoy</div>
           </div>
-        )}
-
-        {streak > 0 && (
-          <div className="card">
-            <div className="card-title">Racha de seguimiento</div>
-            <div className="card-meta">{streak} {streak === 1 ? 'día' : 'días'} registrando tu glucosa</div>
-          </div>
-        )}
+        </div>
 
         <div className="section-label" style={{ marginTop: '1.5rem' }}>Registrar</div>
-
-        <a href="/glucosa" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Glucosa</div>
-            <div className="card-meta">Registra y consulta tus mediciones</div>
-          </div>
-        </a>
-
-        <a href="/peso" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Peso</div>
-            <div className="card-meta">Registra tu peso e IMC</div>
-          </div>
-        </a>
-
-        <a href="/comidas" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Comidas</div>
-            <div className="card-meta">Registra tu alimentación diaria</div>
-          </div>
-        </a>
-
-        <a href="/ejercicio" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Ejercicio</div>
-            <div className="card-meta">Registra tu actividad física</div>
-          </div>
-        </a>
-
-        <a href="/agua" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Agua</div>
-            <div className="card-meta">Registra tu hidratación diaria</div>
-          </div>
-        </a>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          {ACCIONES.map((a) => (
+            <a key={a.href} href={a.href} style={{ textDecoration: 'none' }}>
+              <div className="card" style={{ marginBottom: 0, textAlign: 'center', padding: '1rem 0.75rem' }}>
+                <div className="card-title" style={{ fontSize: '0.875rem' }}>{a.label}</div>
+              </div>
+            </a>
+          ))}
+        </div>
 
         <div className="section-label" style={{ marginTop: '1.5rem' }}>Planes personalizados</div>
-
-        <a href="/rutina" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Rutina de ejercicio</div>
-            <div className="card-meta">Genera tu plan semanal con IA</div>
-          </div>
-        </a>
-
-        <a href="/dieta" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Plan de alimentación</div>
-            <div className="card-meta">Genera tu plan semanal con IA</div>
-          </div>
-        </a>
-
-        <a href="/antecedentes" style={{ textDecoration: 'none' }}>
-          <div className="card">
-            <div className="card-title">Antecedentes médicos</div>
-            <div className="card-meta">Actualiza tu información clínica</div>
-          </div>
-        </a>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          {PLANES.map((p) => (
+            <a key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
+              <div className="card" style={{ marginBottom: 0, textAlign: 'center', padding: '1rem 0.75rem' }}>
+                <div className="card-title" style={{ fontSize: '0.875rem' }}>{p.label}</div>
+              </div>
+            </a>
+          ))}
+        </div>
 
         <button onClick={handleLogout} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
           Cerrar sesión
