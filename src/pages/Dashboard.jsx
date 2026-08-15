@@ -63,10 +63,19 @@ export default function Dashboard() {
           </div>
         </a>
 
-        <div className="card" style={{ opacity: 0.6 }}>
-          <div className="card-title">Ejercicio</div>
-          <div className="card-meta">Próximamente</div>
-        </div>
+        <a href="/ejercicio" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Ejercicio</div>
+            <div className="card-meta">Registra tu actividad física</div>
+          </div>
+        </a>
+
+        <a href="/agua" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Agua</div>
+            <div className="card-meta">Registra tu hidratación diaria</div>
+          </div>
+        </a>
 
         <div className="card" style={{ opacity: 0.6 }}>
           <div className="card-title">Cuidado de heridas</div>
