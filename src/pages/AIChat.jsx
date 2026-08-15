@@ -2,6 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+function calcAge(birthDate) {
+  if (!birthDate) return null
+  const b = new Date(birthDate)
+  const today = new Date()
+  let age = today.getFullYear() - b.getFullYear()
+  const m = today.getMonth() - b.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--
+  return age
+}
+
+function renderContent(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
 export default function AIChat() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -69,6 +89,7 @@ export default function AIChat() {
           patientContext: profile
             ? {
                 full_name: profile.full_name,
+                age: calcAge(profile.birth_date),
                 diabetes_type: profile.diabetes_type,
                 diagnosis_year: profile.diagnosis_year,
                 last_hba1c: profile.last_hba1c,
@@ -109,8 +130,16 @@ export default function AIChat() {
   if (loading) return <div className="container">Cargando...</div>
 
   return (
-    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div className="header">
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#f4f6f7',
+      }}
+    >
+      <div className="header" style={{ flexShrink: 0 }}>
         <Link to="/dashboard" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.875rem', opacity: 0.85 }}>
           ‹ Volver
         </Link>
@@ -118,7 +147,7 @@ export default function AIChat() {
         <div className="header-subtitle">Internista · Endocrinólogo · Nutrición y actividad física</div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', backgroundColor: '#f4f6f7' }}>
         {messages.length === 0 && (
           <div className="card" style={{ textAlign: 'center' }}>
             <div className="card-meta">
@@ -142,21 +171,22 @@ export default function AIChat() {
                 maxWidth: '80%',
                 padding: '0.625rem 0.875rem',
                 borderRadius: '14px',
-                backgroundColor: m.role === 'user' ? '#0F4C5C' : '#eef3f4',
+                backgroundColor: m.role === 'user' ? '#0F4C5C' : '#ffffff',
                 color: m.role === 'user' ? '#fff' : '#152E44',
                 fontSize: '0.9375rem',
-                lineHeight: 1.45,
+                lineHeight: 1.5,
                 whiteSpace: 'pre-wrap',
+                boxShadow: m.role === 'user' ? 'none' : '0 1px 2px rgba(15,76,92,0.1)',
               }}
             >
-              {m.content}
+              {renderContent(m.content)}
             </div>
           </div>
         ))}
 
         {sending && (
           <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '0.75rem' }}>
-            <div style={{ padding: '0.625rem 0.875rem', borderRadius: '14px', backgroundColor: '#eef3f4', color: '#5c6b73', fontSize: '0.9375rem' }}>
+            <div style={{ padding: '0.625rem 0.875rem', borderRadius: '14px', backgroundColor: '#ffffff', color: '#5c6b73', fontSize: '0.9375rem', boxShadow: '0 1px 2px rgba(15,76,92,0.1)' }}>
               Escribiendo...
             </div>
           </div>
@@ -166,7 +196,18 @@ export default function AIChat() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1.25rem', borderTop: '1px solid rgba(15,76,92,0.1)' }}>
+      <form
+        onSubmit={handleSend}
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          padding: '0.75rem 1.25rem',
+          paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+          borderTop: '1px solid rgba(15,76,92,0.1)',
+          backgroundColor: '#ffffff',
+          flexShrink: 0,
+        }}
+      >
         <input
           type="text"
           value={input}
