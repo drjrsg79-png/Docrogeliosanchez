@@ -49,6 +49,13 @@ export default function Dashboard() {
           </div>
         </a>
 
+        <a href="/peso" style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <div className="card-title">Peso</div>
+            <div className="card-meta">Registra tu peso e IMC</div>
+          </div>
+        </a>
+
         <div className="card" style={{ opacity: 0.6 }}>
           <div className="card-title">Comidas</div>
           <div className="card-meta">Próximamente</div>
