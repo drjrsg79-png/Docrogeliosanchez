@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Toast from '../components/Toast'
 
 const MEAL_TYPES = [
   { value: 'desayuno', label: 'Desayuno' },
@@ -62,6 +63,7 @@ export default function MealLog() {
   const [lastResult, setLastResult] = useState(null)
   const [userId, setUserId] = useState(null)
   const [diabetesType, setDiabetesType] = useState(null)
+  const [toast, setToast] = useState('')
 
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
@@ -154,18 +156,10 @@ export default function MealLog() {
     setLastResult(null)
 
     const carbsNum = carbs !== '' ? parseFloat(carbs) : null
-    let photoUrl = null
 
     if (photoFile) {
       const fileName = `${userId}/${Date.now()}-${photoFile.name}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('food-photos')
-        .upload(fileName, photoFile)
-
-      if (!uploadError && uploadData) {
-        const { data: urlData } = supabase.storage.from('food-photos').getPublicUrl(fileName)
-        photoUrl = urlData?.publicUrl || null
-      }
+      await supabase.storage.from('food-photos').upload(fileName, photoFile)
     }
 
     const { data, error } = await supabase
@@ -202,12 +196,7 @@ export default function MealLog() {
       setPhotoFile(null)
       setPhotoPreview(null)
       setAnalysisResult(null)
-    }
-    if (photoUrl) {
-      await supabase
-        .from('meals')
-        .update({})
-        .eq('id', data?.id)
+      setToast('Comida guardada')
     }
     setSaving(false)
   }
@@ -216,6 +205,8 @@ export default function MealLog() {
 
   return (
     <div className="page">
+      <Toast message={toast} onClose={() => setToast('')} />
+
       <div className="header">
         <div className="header-title">Comidas</div>
         <div className="header-subtitle">Registro de alimentación y macronutrientes</div>
@@ -379,4 +370,4 @@ export default function MealLog() {
       </div>
     </div>
   )
-}
+              }
