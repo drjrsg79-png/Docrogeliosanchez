@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
+import Toast from '../components/Toast'
 
 const CONTEXT_OPTIONS = [
   { value: 'antes_desayuno', label: 'Antes del desayuno' },
@@ -60,6 +61,7 @@ export default function GlucoseLog() {
   const [saving, setSaving] = useState(false)
   const [lastResult, setLastResult] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [toast, setToast] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -107,6 +109,7 @@ export default function GlucoseLog() {
       setReadings([data, ...readings])
       setLastResult(evaluacion)
       setValue('')
+      setToast('Medición guardada')
     }
     setSaving(false)
   }
@@ -122,6 +125,8 @@ export default function GlucoseLog() {
 
   return (
     <div className="page">
+      <Toast message={toast} onClose={() => setToast('')} />
+
       <div className="header">
         <div className="header-title">Glucosa</div>
         <div className="header-subtitle">Registro y seguimiento de glucemia capilar</div>
@@ -210,4 +215,4 @@ export default function GlucoseLog() {
       </div>
     </div>
   )
-      }
+}
