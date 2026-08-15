@@ -6,6 +6,29 @@ import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine,
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
+async function fetchJsonSafe(url, body, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const text = await res.text()
+      if (!text) throw new Error('Respuesta vacía del servidor')
+      const data = JSON.parse(text)
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Error del servidor')
+      }
+      return { data, ok: true }
+    } catch (err) {
+      if (attempt === retries) {
+        return { error: err.message || 'No se pudo completar la solicitud', ok: false }
+      }
+    }
+  }
+}
+
 export default function DietPlan() {
   const [profile, setProfile] = useState(null)
   const [goal, setGoal] = useState('')
@@ -48,55 +71,48 @@ export default function DietPlan() {
     setError('')
     setPlan(null)
 
-    try {
-      setProgress('Calculando tus metas nutricionales...')
-      const summaryRes = await fetch('/.netlify/functions/generate-diet-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goal,
-          diabetesType: profile?.diabetes_type,
-          currentWeight: profile?.current_weight,
-          heightCm: profile?.height_cm,
-          weightGoal: profile?.weight_goal_kg,
-        }),
+    setProgress('Calculando tus metas nutricionales...')
+    const summaryResult = await fetchJsonSafe('/.netlify/functions/generate-diet-summary', {
+      goal,
+      diabetesType: profile?.diabetes_type,
+      currentWeight: profile?.current_weight,
+      heightCm: profile?.height_cm,
+      weightGoal: profile?.weight_goal_kg,
+    })
+
+    if (!summaryResult.ok) {
+      setError(`No se pudo calcular el resumen inicial: ${summaryResult.error}. Intenta generar el plan de nuevo.`)
+      setGenerating(false)
+      setProgress('')
+      return
+    }
+
+    const summary = summaryResult.data
+    const dias = []
+
+    for (let i = 0; i < DIAS.length; i++) {
+      const diaNombre = DIAS[i]
+      setProgress(`Generando ${diaNombre} (día ${i + 1} de 7)...`)
+
+      const dayResult = await fetchJsonSafe('/.netlify/functions/generate-diet-day', {
+        day: diaNombre,
+        goal,
+        diabetesType: profile?.diabetes_type,
+        caloriasDiarias: summary.calorias_diarias,
       })
-      const summary = await summaryRes.json()
-      if (!summaryRes.ok || summary.error) {
-        setError(summary.error || 'No se pudo generar el resumen.')
+
+      if (!dayResult.ok) {
+        setError(`Se generaron ${i} de 7 días. Falló ${diaNombre}: ${dayResult.error}. Puedes intentar de nuevo.`)
         setGenerating(false)
+        setProgress('')
         return
       }
 
-      const dias = []
-      for (let i = 0; i < DIAS.length; i++) {
-        const diaNombre = DIAS[i]
-        setProgress(`Generando ${diaNombre} (día ${i + 1} de 7)...`)
-
-        const dayRes = await fetch('/.netlify/functions/generate-diet-day', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            day: diaNombre,
-            goal,
-            diabetesType: profile?.diabetes_type,
-            caloriasDiarias: summary.calorias_diarias,
-          }),
-        })
-        const dayData = await dayRes.json()
-        if (!dayRes.ok || dayData.error) {
-          setError(`No se pudo generar ${diaNombre}. Intenta de nuevo.`)
-          setGenerating(false)
-          return
-        }
-        dias.push({ dia: diaNombre, comidas: dayData.comidas })
-        setPlan({ ...summary, dias: [...dias] })
-      }
-
-      setProgress('')
-    } catch {
-      setError('No se pudo generar el plan. Verifica tu conexión.')
+      dias.push({ dia: diaNombre, comidas: dayResult.data.comidas })
+      setPlan({ ...summary, dias: [...dias] })
     }
+
+    setProgress('')
     setGenerating(false)
   }
 
@@ -211,4 +227,4 @@ export default function DietPlan() {
       </div>
     </div>
   )
-}
+      }
