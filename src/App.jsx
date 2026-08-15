@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import DoctorPanel from './pages/DoctorPanel'
 import GlucoseLog from './pages/GlucoseLog'
 import WeightLog from './pages/WeightLog'
+import MealLog from './pages/MealLog'
 
 function Home() {
   return (
@@ -38,6 +39,7 @@ function App() {
       <Route path="/doctor" element={<DoctorPanel />} />
       <Route path="/glucosa" element={<GlucoseLog />} />
       <Route path="/peso" element={<WeightLog />} />
+      <Route path="/comidas" element={<MealLog />} />
     </Routes>
   )
 }
