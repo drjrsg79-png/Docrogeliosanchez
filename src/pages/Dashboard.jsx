@@ -28,6 +28,8 @@ function Icon({ name, color }) {
       return <svg {...common}><path d="M4 9v6M20 9v6M7 7v10M17 7v10M2 12h3M19 12h3M7 12h10" /></svg>
     case 'clipboard':
       return <svg {...common}><rect x="6" y="4" width="12" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M9 11h6M9 15h6" /></svg>
+    case 'chat':
+      return <svg {...common}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" /></svg>
     default:
       return null
   }
@@ -207,6 +209,28 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <a href="/chat" style={{ textDecoration: 'none' }}>
+          <div
+            className="card"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.875rem',
+              padding: '1rem',
+              background: 'linear-gradient(135deg, #0f4c5c 0%, #0a3844 100%)',
+              boxShadow: '0 2px 8px rgba(15,76,92,0.28)',
+            }}
+          >
+            <div style={{ ...iconCircle('#ffffff'), backgroundColor: 'rgba(255,255,255,0.15)' }}>
+              <Icon name="chat" color="#ffffff" />
+            </div>
+            <div>
+              <div className="card-title" style={{ color: '#ffffff', fontSize: '0.9375rem' }}>Asistente médico virtual</div>
+              <div className="card-meta" style={{ color: 'rgba(255,255,255,0.75)' }}>Pregunta sobre nutrición, ejercicio o tu diabetes</div>
+            </div>
+          </div>
+        </a>
+
         <div className="section-label" style={{ marginTop: '1.5rem' }}>Registrar</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
           {ACCIONES.map((a) => (
@@ -241,4 +265,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-                           }
+}
