@@ -89,11 +89,14 @@ export default function ExerciseLog() {
         <FootCareWarning />
 
         {!currentWeight && (
-          <div className="card" style={{ backgroundColor: '#fdf1e3', borderColor: '#a15c00' }}>
-            <div className="card-meta" style={{ color: '#a15c00' }}>
-              Registra tu peso primero para que podamos calcular tus calorías quemadas con mayor precisión.
+          <Link to="/peso" style={{ textDecoration: 'none' }}>
+            <div className="card" style={{ backgroundColor: '#fdf1e3', borderColor: '#a15c00' }}>
+              <div className="card-title" style={{ color: '#a15c00' }}>Registra tu peso primero</div>
+              <div className="card-meta" style={{ color: '#a15c00' }}>
+                Toca aquí para registrarlo y así calcular tus calorías quemadas con mayor precisión.
+              </div>
             </div>
-          </div>
+          </Link>
         )}
 
         <div className="card">
