@@ -10,6 +10,7 @@ import ExerciseLog from './pages/ExerciseLog'
 import WaterLog from './pages/WaterLog'
 import ExerciseRoutine from './pages/ExerciseRoutine'
 import DietPlan from './pages/DietPlan'
+import MedicalHistory from './pages/MedicalHistory'
 
 function Home() {
   return (
@@ -20,7 +21,7 @@ function Home() {
       </div>
       <div className="auth-container">
         <p className="page-subtitle" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          Plataforma de orientación y seguimiento clínico para pacientes con diabetes y heridas.
+          Plataforma de orientación y seguimiento clínico para pacientes con diabetes.
         </p>
         <a href="/login" className="btn btn-primary" style={{ marginBottom: '0.75rem', display: 'block', textAlign: 'center', textDecoration: 'none' }}>
           Iniciar sesión
@@ -48,6 +49,7 @@ function App() {
       <Route path="/agua" element={<WaterLog />} />
       <Route path="/rutina" element={<ExerciseRoutine />} />
       <Route path="/dieta" element={<DietPlan />} />
+      <Route path="/antecedentes" element={<MedicalHistory />} />
     </Routes>
   )
 }
