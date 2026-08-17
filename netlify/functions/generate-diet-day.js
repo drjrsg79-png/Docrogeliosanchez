@@ -1,14 +1,19 @@
 export default async function handler(request) {
   try {
     const body = await request.json()
-    const { day, goal, diabetesType, caloriasDiarias } = body
+    const { day, goal, diabetesType, caloriasDiarias, usedDishes } = body
 
     const tieneDiabetes = diabetesType && diabetesType !== 'ninguna'
+    const yaUsados = Array.isArray(usedDishes) && usedDishes.length > 0
+      ? `\n\nPlatillos ya usados en dias anteriores de esta semana (NO los repitas, propone opciones distintas): ${usedDishes.join(', ')}.`
+      : ''
 
     const systemPrompt = tieneDiabetes
       ? `Eres un endocrinologo y nutriologo clinico experto en pacientes diabeticos.
 
-Genera SOLO las comidas del dia "${day}" para un paciente con diabetes tipo ${diabetesType}, objetivo: ${goal || 'control glucemico'}, meta de ${caloriasDiarias || 1800} kcal/dia. Usa platillos con ingredientes accesibles en Mexico, bajo indice glucemico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.
+Genera SOLO las comidas del dia "${day}" para un paciente con diabetes tipo ${diabetesType}, objetivo: ${goal || 'control glucemico'}, meta de ${caloriasDiarias || 1800} kcal/dia. Usa platillos con ingredientes accesibles en Mexico, bajo indice glucemico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.${yaUsados}
+
+Es importante variar los platillos dia a dia para que el plan semanal sea variado y no repetitivo.
 
 Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
 {
@@ -19,7 +24,9 @@ Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, s
 El array debe tener exactamente 4 comidas: desayuno, comida, cena, colacion.`
       : `Eres un internista y nutriologo clinico experto en alimentacion saludable y manejo de peso.
 
-Genera SOLO las comidas del dia "${day}" para un paciente sin diabetes, objetivo: ${goal || 'alimentacion saludable'}, meta de ${caloriasDiarias || 2000} kcal/dia. Usa platillos ricos, variados y apetecibles, con ingredientes accesibles en Mexico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.
+Genera SOLO las comidas del dia "${day}" para un paciente sin diabetes, objetivo: ${goal || 'alimentacion saludable'}, meta de ${caloriasDiarias || 2000} kcal/dia. Usa platillos ricos, variados y apetecibles, con ingredientes accesibles en Mexico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.${yaUsados}
+
+Es importante variar los platillos dia a dia para que el plan semanal sea variado y no repetitivo.
 
 Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
 {
