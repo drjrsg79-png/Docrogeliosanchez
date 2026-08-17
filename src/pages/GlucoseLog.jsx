@@ -62,6 +62,7 @@ export default function GlucoseLog() {
   const [lastResult, setLastResult] = useState(null)
   const [userId, setUserId] = useState(null)
   const [toast, setToast] = useState('')
+  const [saveError, setSaveError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -91,21 +92,35 @@ export default function GlucoseLog() {
     if (!value) return
     setSaving(true)
     setLastResult(null)
+    setSaveError('')
 
     const numericValue = parseInt(value, 10)
     const evaluacion = evaluarLectura(numericValue, context)
 
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      setSaveError('Tu sesión expiró. Por favor cierra sesión y vuelve a iniciar sesión.')
+      setSaving(false)
+      return
+    }
+
     const { data, error } = await supabase
       .from('glucose_logs')
       .insert({
-        user_id: userId,
+        user_id: user.id,
         value_mg_dl: numericValue,
         context,
       })
       .select()
       .single()
 
-    if (!error && data) {
+    if (error) {
+      setSaveError(`No se pudo guardar: ${error.message}`)
+      setSaving(false)
+      return
+    }
+
+    if (data) {
       setReadings([data, ...readings])
       setLastResult(evaluacion)
       setValue('')
@@ -158,6 +173,7 @@ export default function GlucoseLog() {
                 ))}
               </select>
             </div>
+            {saveError && <div className="alert-error" style={{ marginBottom: '1rem' }}>{saveError}</div>}
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar medicion'}
             </button>
