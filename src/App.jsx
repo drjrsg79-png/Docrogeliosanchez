@@ -49,9 +49,26 @@ function Home() {
       </div>
 
       <div className="auth-container" style={{ marginTop: '2.5rem' }}>
-        <p className="page-subtitle" style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '1rem' }}>
+        <p className="page-subtitle" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '1rem' }}>
           Plataforma de orientación y seguimiento clínico para los pacientes del Dr. Rogelio Sánchez.
         </p>
+
+        <div
+          className="card"
+          style={{
+            backgroundColor: '#eef3f4',
+            borderColor: 'rgba(15,76,92,0.15)',
+            marginBottom: '2rem',
+          }}
+        >
+          <div className="card-title" style={{ fontSize: '0.9375rem', color: '#0f4c5c' }}>
+            Antes de empezar
+          </div>
+          <div className="card-meta" style={{ marginTop: '0.375rem' }}>
+            Al registrarte, captura tus antecedentes médicos, peso y estatura. De ahí se calculan tu meta calórica, tus planes de alimentación y ejercicio, y las recomendaciones personalizadas de la app — mientras más completa esté esa información, más precisas serán.
+          </div>
+        </div>
+
         <a
           href="/login"
           className="btn btn-primary"
