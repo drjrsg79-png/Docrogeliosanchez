@@ -3,9 +3,23 @@ export default async function handler(request) {
     const body = await request.json()
     const { day, goal, diabetesType, caloriasDiarias } = body
 
-    const systemPrompt = `Eres un endocrinologo y nutriologo clinico experto en pacientes diabeticos.
+    const tieneDiabetes = diabetesType && diabetesType !== 'ninguna'
 
-Genera SOLO las comidas del dia "${day}" para un paciente con diabetes tipo ${diabetesType || 'no especificado'}, objetivo: ${goal || 'control glucemico'}, meta de ${caloriasDiarias || 1800} kcal/dia. Usa platillos con ingredientes accesibles en Mexico, bajo indice glucemico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.
+    const systemPrompt = tieneDiabetes
+      ? `Eres un endocrinologo y nutriologo clinico experto en pacientes diabeticos.
+
+Genera SOLO las comidas del dia "${day}" para un paciente con diabetes tipo ${diabetesType}, objetivo: ${goal || 'control glucemico'}, meta de ${caloriasDiarias || 1800} kcal/dia. Usa platillos con ingredientes accesibles en Mexico, bajo indice glucemico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.
+
+Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
+{
+  "comidas": [
+    { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
+  ]
+}
+El array debe tener exactamente 4 comidas: desayuno, comida, cena, colacion.`
+      : `Eres un internista y nutriologo clinico experto en alimentacion saludable y manejo de peso.
+
+Genera SOLO las comidas del dia "${day}" para un paciente sin diabetes, objetivo: ${goal || 'alimentacion saludable'}, meta de ${caloriasDiarias || 2000} kcal/dia. Usa platillos ricos, variados y apetecibles, con ingredientes accesibles en Mexico. Cada "descripcion" maximo 8 palabras, en una sola linea sin saltos de linea.
 
 Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
 {
