@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import { supabase } from '../lib/supabase'
-import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addFootersToAllPages } from '../lib/pdfStyle'
+import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addVideoLink, addFootersToAllPages } from '../lib/pdfStyle'
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -27,6 +27,10 @@ async function fetchJsonSafe(url, body, retries = 2) {
       }
     }
   }
+}
+
+function youtubeSearchUrl(query) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
 }
 
 export default function DietPlan() {
@@ -139,6 +143,9 @@ export default function DietPlan() {
         y = checkPageBreak(doc, y, 18)
         const meta = `${c.calorias} kcal · ${c.carbohidratos_g}g carb · ${c.proteina_g}g prot · ${c.grasas_g}g grasa`
         y = addItemLine(doc, y, `${c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1)}: ${c.platillo}`, meta, c.descripcion)
+        if (c.busqueda_video && c.busqueda_video !== 'null') {
+          y = addVideoLink(doc, y, c.busqueda_video)
+        }
       })
       y += 3
     })
@@ -223,6 +230,16 @@ export default function DietPlan() {
                     <div style={{ fontWeight: 600, fontSize: '0.875rem', textTransform: 'capitalize' }}>{c.tipo}: {c.platillo}</div>
                     <div className="card-meta">{c.descripcion}</div>
                     <div className="card-meta">{c.calorias} kcal · {c.carbohidratos_g}g carb</div>
+                    {c.busqueda_video && c.busqueda_video !== 'null' && (
+                      <a
+                        href={youtubeSearchUrl(c.busqueda_video)}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: '0.8125rem', color: '#0f4c5c', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}
+                      >
+                        ▶ Ver receta en video
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
