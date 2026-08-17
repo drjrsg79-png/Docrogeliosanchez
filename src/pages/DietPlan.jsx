@@ -89,6 +89,7 @@ export default function DietPlan() {
 
     const summary = summaryResult.data
     const dias = []
+    const usedDishes = []
 
     for (let i = 0; i < DIAS.length; i++) {
       const diaNombre = DIAS[i]
@@ -99,6 +100,7 @@ export default function DietPlan() {
         goal,
         diabetesType: profile?.diabetes_type,
         caloriasDiarias: summary.calorias_diarias,
+        usedDishes,
       })
 
       if (!dayResult.ok) {
@@ -109,6 +111,9 @@ export default function DietPlan() {
       }
 
       dias.push({ dia: diaNombre, comidas: dayResult.data.comidas })
+      dayResult.data.comidas?.forEach((c) => {
+        if (c.platillo) usedDishes.push(c.platillo)
+      })
       setPlan({ ...summary, dias: [...dias] })
     }
 
@@ -227,4 +232,4 @@ export default function DietPlan() {
       </div>
     </div>
   )
-      }
+}
