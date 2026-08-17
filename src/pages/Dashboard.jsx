@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [caloriesIn, setCaloriesIn] = useState(0)
   const [caloriesOut, setCaloriesOut] = useState(0)
   const [waterToday, setWaterToday] = useState(0)
+  const [macrosToday, setMacrosToday] = useState({ carbs: 0, protein: 0, fat: 0 })
   const [latestGlucose, setLatestGlucose] = useState(null)
   const [glucoseTrend, setGlucoseTrend] = useState([])
   const [showAgendaModal, setShowAgendaModal] = useState(false)
@@ -80,10 +81,15 @@ export default function Dashboard() {
 
       const { data: meals } = await supabase
         .from('meals')
-        .select('calories')
+        .select('calories, carbs_g, protein_g, fat_g')
         .eq('user_id', user.id)
         .gte('logged_at', today)
       setCaloriesIn((meals || []).reduce((sum, m) => sum + (m.calories || 0), 0))
+      setMacrosToday({
+        carbs: (meals || []).reduce((sum, m) => sum + (m.carbs_g || 0), 0),
+        protein: (meals || []).reduce((sum, m) => sum + (m.protein_g || 0), 0),
+        fat: (meals || []).reduce((sum, m) => sum + (m.fat_g || 0), 0),
+      })
 
       const { data: exercises } = await supabase
         .from('exercise_logs')
@@ -193,6 +199,23 @@ export default function Dashboard() {
             <div style={{ height: '100%', width: `${porcentajeMeta}%`, backgroundColor: semaforo, borderRadius: '999px' }} />
           </div>
           <div className="card-meta" style={{ marginTop: '0.5rem' }}>Balance neto: {balance >= 0 ? '+' : ''}{balance} kcal</div>
+
+          {(macrosToday.carbs > 0 || macrosToday.protein > 0 || macrosToday.fat > 0) && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid rgba(15,76,92,0.08)' }}>
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#a15c00' }}>{Math.round(macrosToday.carbs)}g</div>
+                <div className="card-meta" style={{ margin: 0 }}>Carbs</div>
+              </div>
+              <div style={{ flex: 1, textAlign: 'center', borderLeft: '1px solid rgba(15,76,92,0.08)', borderRight: '1px solid rgba(15,76,92,0.08)' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1565c0' }}>{Math.round(macrosToday.protein)}g</div>
+                <div className="card-meta" style={{ margin: 0 }}>Proteína</div>
+              </div>
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#b3261e' }}>{Math.round(macrosToday.fat)}g</div>
+                <div className="card-meta" style={{ margin: 0 }}>Grasas</div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -362,4 +385,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-      }
+                      }
