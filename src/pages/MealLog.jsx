@@ -71,6 +71,10 @@ export default function MealLog() {
   const [analysisResult, setAnalysisResult] = useState(null)
   const [analysisError, setAnalysisError] = useState('')
 
+  const [estimatingText, setEstimatingText] = useState(false)
+  const [textEstimateError, setTextEstimateError] = useState('')
+  const [textEstimateReasoning, setTextEstimateReasoning] = useState('')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -149,6 +153,41 @@ export default function MealLog() {
     setAnalyzing(false)
   }
 
+  async function handleEstimateFromText() {
+    if (!name.trim()) return
+    setEstimatingText(true)
+    setTextEstimateError('')
+    setTextEstimateReasoning('')
+
+    try {
+      const response = await fetch('/.netlify/functions/analyze-food-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          foodName: name,
+          diabetesType,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        setTextEstimateError(result.error || 'No se pudo estimar. Intenta de nuevo o ingresa los valores manualmente.')
+        setEstimatingText(false)
+        return
+      }
+
+      setCalories(result.estimated_calories ?? '')
+      setCarbs(result.carbs_g ?? '')
+      setProtein(result.protein_g ?? '')
+      setFat(result.fat_g ?? '')
+      setTextEstimateReasoning(result.reasoning || '')
+    } catch (err) {
+      setTextEstimateError('Error de conexión. Intenta de nuevo.')
+    }
+    setEstimatingText(false)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (!name) return
@@ -196,6 +235,7 @@ export default function MealLog() {
       setPhotoFile(null)
       setPhotoPreview(null)
       setAnalysisResult(null)
+      setTextEstimateReasoning('')
       setToast('Comida guardada')
     }
     setSaving(false)
@@ -290,6 +330,32 @@ export default function MealLog() {
                 required
               />
             </div>
+
+            {!analysisResult && !photoFile && (
+              <div style={{ marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={handleEstimateFromText}
+                  className="btn btn-secondary"
+                  disabled={estimatingText || !name.trim()}
+                  style={{ width: '100%' }}
+                >
+                  {estimatingText ? 'Estimando...' : 'Estimar calorías y macros con IA'}
+                </button>
+                <p className="card-meta" style={{ marginTop: '0.375rem', textAlign: 'center' }}>
+                  Escribe qué comiste y toca este botón para que se llenen los campos automáticamente.
+                </p>
+              </div>
+            )}
+
+            {textEstimateError && <div className="alert-error" style={{ marginBottom: '1rem' }}>{textEstimateError}</div>}
+
+            {textEstimateReasoning && (
+              <div style={{ marginBottom: '1rem', padding: '0.875rem', backgroundColor: '#eef3f4', borderRadius: '8px' }}>
+                <div className="card-meta">{textEstimateReasoning}</div>
+              </div>
+            )}
+
             <div className="field">
               <label>Calorías</label>
               <input
@@ -370,4 +436,4 @@ export default function MealLog() {
       </div>
     </div>
   )
-              }
+          }
