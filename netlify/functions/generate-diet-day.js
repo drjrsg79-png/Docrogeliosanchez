@@ -15,10 +15,12 @@ Genera SOLO las comidas del dia "${day}" para un paciente con diabetes tipo ${di
 
 Es importante variar los platillos dia a dia para que el plan semanal sea variado y no repetitivo.
 
+Para cada comida incluye tambien "busqueda_video": una frase corta en español (4-6 palabras) que sirva como busqueda en YouTube para encontrar una receta de ese platillo, por ejemplo "receta pechuga pollo horno facil".
+
 Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
 {
   "comidas": [
-    { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
+    { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero, "busqueda_video": "frase corta para buscar en youtube" }
   ]
 }
 El array debe tener exactamente 4 comidas: desayuno, comida, cena, colacion.`
@@ -28,10 +30,12 @@ Genera SOLO las comidas del dia "${day}" para un paciente sin diabetes, objetivo
 
 Es importante variar los platillos dia a dia para que el plan semanal sea variado y no repetitivo.
 
+Para cada comida incluye tambien "busqueda_video": una frase corta en español (4-6 palabras) que sirva como busqueda en YouTube para encontrar una receta de ese platillo, por ejemplo "receta pechuga pollo horno facil".
+
 Responde UNICAMENTE con un JSON valido de una sola linea, sin texto adicional, sin markdown:
 {
   "comidas": [
-    { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
+    { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero, "busqueda_video": "frase corta para buscar en youtube" }
   ]
 }
 El array debe tener exactamente 4 comidas: desayuno, comida, cena, colacion.`
@@ -45,7 +49,7 @@ El array debe tener exactamente 4 comidas: desayuno, comida, cena, colacion.`
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 900,
+        max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: `Genera las comidas de ${day}, solo el JSON en una sola linea.` }],
       }),
