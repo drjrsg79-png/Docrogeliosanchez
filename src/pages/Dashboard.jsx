@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
-
-function startOfToday() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
-}
+import ClinicCard from '../components/ClinicCard'
+import { AGENDA_DETAIL, AGENDA_URL, DOCTOR_SHORT, SO_PRICE } from '../lib/clinic'
 
 function Icon({ name, color }) {
   const common = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -37,33 +33,61 @@ function Icon({ name, color }) {
   }
 }
 
-const ACCIONES = [
-  { href: '/glucosa', label: 'Glucosa', icon: 'drop', color: '#b3261e' },
+const PRINCIPALES = [
+  {
+    href: '/segunda-opinion',
+    label: 'Segunda opinión',
+    detail: `El doctor revisa tu caso · ${SO_PRICE}`,
+    icon: 'clipboard',
+    color: '#0f4c5c',
+  },
+  {
+    href: AGENDA_URL,
+    external: true,
+    label: 'Agendar cita',
+    detail: AGENDA_DETAIL,
+    icon: 'calendar',
+    color: '#0f4c5c',
+  },
+  {
+    href: '/antecedentes',
+    label: 'Historial médico',
+    detail: 'Antecedentes, medicamentos y alergias',
+    icon: 'notes',
+    color: '#0f4c5c',
+  },
+  {
+    href: '/chat',
+    label: 'Orientación',
+    detail: 'Dudas del día a día. No sustituye la consulta.',
+    icon: 'chat',
+    color: '#0f4c5c',
+  },
+]
+
+const MAS = [
   { href: '/peso', label: 'Peso', icon: 'scale', color: '#0f4c5c' },
   { href: '/comidas', label: 'Comidas', icon: 'fork', color: '#a15c00' },
   { href: '/ejercicio', label: 'Ejercicio', icon: 'run', color: '#1e6b3c' },
   { href: '/agua', label: 'Agua', icon: 'glass', color: '#1565c0' },
-  { href: '/antecedentes', label: 'Antecedentes', icon: 'notes', color: '#5c6b73' },
-]
-
-const PLANES = [
-  { href: '/rutina', label: 'Rutina de ejercicio', icon: 'dumbbell', color: '#1e6b3c' },
+  { href: '/rutina', label: 'Rutina', icon: 'dumbbell', color: '#1e6b3c' },
   { href: '/dieta', label: 'Plan de alimentación', icon: 'clipboard', color: '#a15c00' },
 ]
 
-const WHATSAPP_NUMBER = '5215569320331'
-const WHATSAPP_MESSAGE = 'Hola, no me encuentro en CDMX y me gustaría agendar una videollamada con el Dr. Rogelio Sánchez.'
+function formatMeasuredAt(iso) {
+  return new Date(iso).toLocaleString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [caloriesIn, setCaloriesIn] = useState(0)
-  const [caloriesOut, setCaloriesOut] = useState(0)
-  const [waterToday, setWaterToday] = useState(0)
-  const [macrosToday, setMacrosToday] = useState({ carbs: 0, protein: 0, fat: 0 })
   const [latestGlucose, setLatestGlucose] = useState(null)
   const [glucoseTrend, setGlucoseTrend] = useState([])
-  const [showAgendaModal, setShowAgendaModal] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -76,34 +100,6 @@ export default function Dashboard() {
 
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(profileData)
-
-      const today = startOfToday().toISOString()
-
-      const { data: meals } = await supabase
-        .from('meals')
-        .select('calories, carbs_g, protein_g, fat_g')
-        .eq('user_id', user.id)
-        .gte('logged_at', today)
-      setCaloriesIn((meals || []).reduce((sum, m) => sum + (m.calories || 0), 0))
-      setMacrosToday({
-        carbs: (meals || []).reduce((sum, m) => sum + (m.carbs_g || 0), 0),
-        protein: (meals || []).reduce((sum, m) => sum + (m.protein_g || 0), 0),
-        fat: (meals || []).reduce((sum, m) => sum + (m.fat_g || 0), 0),
-      })
-
-      const { data: exercises } = await supabase
-        .from('exercise_logs')
-        .select('calories_burned')
-        .eq('user_id', user.id)
-        .gte('logged_at', today)
-      setCaloriesOut((exercises || []).reduce((sum, e) => sum + (e.calories_burned || 0), 0))
-
-      const { data: water } = await supabase
-        .from('water_logs')
-        .select('amount_ml')
-        .eq('user_id', user.id)
-        .gte('logged_at', today)
-      setWaterToday((water || []).reduce((sum, w) => sum + (w.amount_ml || 0), 0))
 
       const { data: glucoseRecent } = await supabase
         .from('glucose_logs')
@@ -126,258 +122,88 @@ export default function Dashboard() {
     navigate('/login')
   }
 
-  function handleWhatsApp() {
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
-    window.open(url, '_blank', 'noopener,noreferrer')
-    setShowAgendaModal(false)
-  }
-
-  function handleMiadmon() {
-    window.open('https://miadmon.com/agendar', '_blank', 'noopener,noreferrer')
-    setShowAgendaModal(false)
-  }
-
   if (loading) return <div className="container">Cargando...</div>
 
-  const meta = profile?.daily_calorie_goal || 2000
-  const balance = caloriesIn - caloriesOut
-  const porcentajeMeta = Math.min(100, Math.round((caloriesIn / meta) * 100))
-  const semaforo = porcentajeMeta < 90 ? '#1e6b3c' : porcentajeMeta <= 105 ? '#a15c00' : '#b3261e'
   const antecedentesIncompletos = !profile?.diagnosis_year && !profile?.diabetes_type
-
-  const gridItemStyle = {
-    marginBottom: 0,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.875rem 1rem',
-    boxShadow: '0 1px 3px rgba(15,76,92,0.08)',
-  }
-
-  const iconCircle = (color) => ({
-    width: '36px',
-    height: '36px',
-    borderRadius: '50%',
-    backgroundColor: `${color}18`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+  const principales = PRINCIPALES.map((item) => {
+    if (item.href !== '/antecedentes' || !antecedentesIncompletos) return item
+    return { ...item, detail: 'Falta completar tu historial' }
   })
 
   return (
     <div className="page">
       <div className="header">
         <div className="header-title">{profile?.full_name || 'Paciente'}</div>
-        <div className="header-subtitle">Panel de seguimiento</div>
+        <div className="header-subtitle">Tu seguimiento con {DOCTOR_SHORT}</div>
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        {antecedentesIncompletos && (
-          <a href="/antecedentes" style={{ textDecoration: 'none' }}>
-            <div className="card" style={{ backgroundColor: '#fdf1e3', borderColor: '#a15c00' }}>
-              <div className="card-title" style={{ color: '#a15c00' }}>Completa tus antecedentes médicos</div>
-              <div className="card-meta" style={{ color: '#a15c00' }}>Toca aquí para personalizar tu seguimiento.</div>
+        <Link to="/glucosa" className="glucose-hero">
+          <div>
+            <div className="section-label" style={{ marginBottom: '0.35rem' }}>Glucosa</div>
+            <div className="glucose-value">
+              {latestGlucose ? `${latestGlucose.value_mg_dl} mg/dL` : 'Sin registros'}
             </div>
-          </a>
-        )}
-
-        <div className="section-label">Hoy</div>
-
-        <div className="card" style={{ boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: semaforo }}>{caloriesIn} kcal</div>
-              <div className="card-meta">Consumidas de {meta} kcal meta</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.125rem', fontWeight: 600, color: '#5c6b73' }}>{caloriesOut} kcal</div>
-              <div className="card-meta">Quemadas</div>
+            <div className="card-meta">
+              {latestGlucose ? formatMeasuredAt(latestGlucose.measured_at) : 'Toca para registrar una medición'}
             </div>
           </div>
-          <div style={{ height: '6px', backgroundColor: '#dde3e6', borderRadius: '999px', overflow: 'hidden', marginTop: '0.75rem' }}>
-            <div style={{ height: '100%', width: `${porcentajeMeta}%`, backgroundColor: semaforo, borderRadius: '999px' }} />
-          </div>
-          <div className="card-meta" style={{ marginTop: '0.5rem' }}>Balance neto: {balance >= 0 ? '+' : ''}{balance} kcal</div>
-
-          {(macrosToday.carbs > 0 || macrosToday.protein > 0 || macrosToday.fat > 0) && (
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid rgba(15,76,92,0.08)' }}>
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#a15c00' }}>{Math.round(macrosToday.carbs)}g</div>
-                <div className="card-meta" style={{ margin: 0 }}>Carbs</div>
-              </div>
-              <div style={{ flex: 1, textAlign: 'center', borderLeft: '1px solid rgba(15,76,92,0.08)', borderRight: '1px solid rgba(15,76,92,0.08)' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1565c0' }}>{Math.round(macrosToday.protein)}g</div>
-                <div className="card-meta" style={{ margin: 0 }}>Proteína</div>
-              </div>
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#b3261e' }}>{Math.round(macrosToday.fat)}g</div>
-                <div className="card-meta" style={{ margin: 0 }}>Grasas</div>
-              </div>
+          {glucoseTrend.length > 1 && (
+            <div className="glucose-spark">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={glucoseTrend}>
+                  <Line type="monotone" dataKey="valor" stroke="#0f4c5c" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           )}
+        </Link>
+
+        <div className="section-label">Para ti</div>
+        <div className="action-list">
+          {principales.map((item) => {
+            const inner = (
+              <>
+                <span className="icon-circle" style={{ backgroundColor: `${item.color}18` }}>
+                  <Icon name={item.icon} color={item.color} />
+                </span>
+                <span>
+                  <span className="card-title">{item.label}</span>
+                  <span className="card-meta" style={{ display: 'block' }}>{item.detail}</span>
+                </span>
+              </>
+            )
+            if (item.external) {
+              return (
+                <a key={item.href} href={item.href} className="action-row" target="_blank" rel="noopener noreferrer">
+                  {inner}
+                </a>
+              )
+            }
+            return (
+              <Link key={item.href} to={item.href} className="action-row">
+                {inner}
+              </Link>
+            )
+          })}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-          <div className="card" style={{ marginBottom: 0, boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
-              <Icon name="drop" color="#b3261e" />
-              <div className="card-title" style={{ fontSize: '0.8125rem' }}>Glucosa</div>
-            </div>
-            {latestGlucose ? (
-              <div className="card-meta">{latestGlucose.value_mg_dl} mg/dL</div>
-            ) : (
-              <div className="card-meta">Sin registros</div>
-            )}
-            {glucoseTrend.length > 1 && (
-              <div style={{ width: '100%', height: '28px', marginTop: '0.25rem' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={glucoseTrend}>
-                    <Line type="monotone" dataKey="valor" stroke="#0f4c5c" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+        <ClinicCard />
+
+        <details className="more-tools">
+          <summary>Más</summary>
+          <p className="card-meta">Peso, comidas, agua y planes. El seguimiento principal es la glucosa y tu historial.</p>
+          <div className="tool-grid">
+            {MAS.map((item) => (
+              <Link key={item.href} to={item.href} className="tool-tile">
+                <span className="icon-circle" style={{ backgroundColor: `${item.color}18` }}>
+                  <Icon name={item.icon} color={item.color} />
+                </span>
+                <span className="card-title" style={{ fontSize: '0.8125rem' }}>{item.label}</span>
+              </Link>
+            ))}
           </div>
-
-          <div className="card" style={{ marginBottom: 0, boxShadow: '0 1px 3px rgba(15,76,92,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
-              <Icon name="glass" color="#1565c0" />
-              <div className="card-title" style={{ fontSize: '0.8125rem' }}>Agua</div>
-            </div>
-            <div className="card-meta">{waterToday} ml hoy</div>
-          </div>
-        </div>
-
-        <a href="/chat" style={{ textDecoration: 'none' }}>
-          <div
-            className="card"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.875rem',
-              padding: '1rem',
-              background: 'linear-gradient(135deg, #0f4c5c 0%, #0a3844 100%)',
-              boxShadow: '0 2px 8px rgba(15,76,92,0.28)',
-            }}
-          >
-            <div style={{ ...iconCircle('#ffffff'), backgroundColor: 'rgba(255,255,255,0.15)' }}>
-              <Icon name="chat" color="#ffffff" />
-            </div>
-            <div>
-              <div className="card-title" style={{ color: '#ffffff', fontSize: '0.9375rem' }}>Mi asistente</div>
-              <div className="card-meta" style={{ color: 'rgba(255,255,255,0.75)' }}>Pregunta lo que necesites sobre tu salud</div>
-            </div>
-          </div>
-        </a>
-
-        <button
-          type="button"
-          onClick={() => setShowAgendaModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.875rem',
-            padding: '1rem',
-            marginTop: '0.75rem',
-            width: '100%',
-            textAlign: 'left',
-            border: 'none',
-            borderRadius: '12px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 1px 3px rgba(15,76,92,0.08)',
-            cursor: 'pointer',
-          }}
-          className="card"
-        >
-          <div style={iconCircle('#0f4c5c')}>
-            <Icon name="calendar" color="#0f4c5c" />
-          </div>
-          <div>
-            <div className="card-title" style={{ fontSize: '0.9375rem' }}>Agendar cita</div>
-            <div className="card-meta">Reserva tu consulta con el Dr. Rogelio</div>
-          </div>
-        </button>
-
-        {showAgendaModal && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(21,46,68,0.5)',
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-            onClick={() => setShowAgendaModal(false)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: '#ffffff',
-                borderTopLeftRadius: '20px',
-                borderTopRightRadius: '20px',
-                padding: '1.5rem 1.25rem',
-                paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
-                width: '100%',
-                maxWidth: '480px',
-              }}
-            >
-              <div style={{ fontSize: '1.0625rem', fontWeight: 700, color: '#152E44', marginBottom: '0.375rem' }}>
-                ¿Dónde te encuentras?
-              </div>
-              <p className="card-meta" style={{ marginBottom: '1.25rem' }}>
-                Las citas presenciales son en la sucursal de Polanco, Ciudad de México. Si no estás en CDMX, puedes solicitar una videollamada.
-              </p>
-
-              <button
-                type="button"
-                onClick={handleMiadmon}
-                className="btn btn-primary"
-                style={{ width: '100%', marginBottom: '0.75rem' }}
-              >
-                Estoy en CDMX — agendar cita
-              </button>
-              <button
-                type="button"
-                onClick={handleWhatsApp}
-                className="btn btn-secondary"
-                style={{ width: '100%' }}
-              >
-                No estoy en CDMX — solicitar videollamada por WhatsApp
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Registrar</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-          {ACCIONES.map((a) => (
-            <a key={a.href} href={a.href} style={{ textDecoration: 'none' }}>
-              <div className="card" style={gridItemStyle}>
-                <div style={iconCircle(a.color)}>
-                  <Icon name={a.icon} color={a.color} />
-                </div>
-                <div className="card-title" style={{ fontSize: '0.875rem' }}>{a.label}</div>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <div className="section-label" style={{ marginTop: '1.5rem' }}>Planes personalizados</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          {PLANES.map((p) => (
-            <a key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
-              <div className="card" style={gridItemStyle}>
-                <div style={iconCircle(p.color)}>
-                  <Icon name={p.icon} color={p.color} />
-                </div>
-                <div className="card-title" style={{ fontSize: '0.8125rem' }}>{p.label}</div>
-              </div>
-            </a>
-          ))}
-        </div>
+        </details>
 
         <button onClick={handleLogout} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
           Cerrar sesión
@@ -385,4 +211,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-                      }
+}

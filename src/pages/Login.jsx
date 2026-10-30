@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { AGENDA_URL, WA_CLINIC_MESSAGE, whatsappUrl } from '../lib/clinic'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -77,6 +78,12 @@ export default function Login() {
         </p>
         <p className="footer-link">
           ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+        </p>
+        <p className="public-links">
+          <Link to="/segunda-opinion">Segunda opinión</Link>
+          <a href={AGENDA_URL} target="_blank" rel="noopener noreferrer">Agendar cita</a>
+          <a href={whatsappUrl(WA_CLINIC_MESSAGE)} target="_blank" rel="noopener noreferrer">WhatsApp clínica</a>
+          <Link to="/">Inicio</Link>
         </p>
       </div>
     </div>

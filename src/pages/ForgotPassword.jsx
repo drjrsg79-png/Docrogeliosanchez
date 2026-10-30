@@ -61,6 +61,9 @@ export default function ForgotPassword() {
         <p className="footer-link">
           <Link to="/login">← Volver a iniciar sesión</Link>
         </p>
+        <p className="footer-link">
+          <Link to="/">Inicio</Link>
+        </p>
       </div>
     </div>
   )
