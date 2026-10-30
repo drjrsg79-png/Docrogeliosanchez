@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { AGENDA_URL, DOCTOR_SHORT, SPECIALTIES, WA_CLINIC_MESSAGE, whatsappUrl } from '../lib/clinic'
+import { AGENDA_URL, DOCTOR_SHORT, SPECIALTIES, SO_PRICE, WA_CLINIC_MESSAGE, safeNextPath, whatsappUrl } from '../lib/clinic'
 
 const BENEFICIOS = [
-  { titulo: 'Segunda opinión', detalle: 'El doctor revisa tu caso y tus estudios. No necesitas cuenta para pedirla.' },
+  { titulo: 'Plan de alimentación', detalle: 'Saca tu dieta aquí. El plan de la semana se arma con tu caso.' },
+  { titulo: 'Segunda opinión', detalle: `El doctor revisa tu caso y tus estudios. ${SO_PRICE}. No necesitas cuenta para pedirla.` },
   { titulo: 'Glucosa', detalle: 'Registra tus mediciones y tenlas a la mano en tu siguiente consulta.' },
   { titulo: 'Historial médico', detalle: 'Antecedentes, medicamentos y alergias en un solo lugar.' },
   { titulo: 'Orientación', detalle: 'Resuelve dudas del día a día. No sustituye la consulta.' },
@@ -22,6 +23,7 @@ export default function Register() {
   const [confirmMessage, setConfirmMessage] = useState('')
   const [showBenefits, setShowBenefits] = useState(false)
   const navigate = useNavigate()
+  const nextPath = safeNextPath(useLocation().search)
 
   async function handleRegister(e) {
     e.preventDefault()
@@ -44,7 +46,7 @@ export default function Register() {
     }
 
     if (data.session) {
-      navigate('/dashboard')
+      navigate(nextPath || '/dashboard')
     } else {
       setConfirmMessage('Tu cuenta se creó correctamente. Revisa tu correo para confirmar tu registro antes de iniciar sesión.')
     }

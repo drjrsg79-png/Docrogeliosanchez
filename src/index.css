@@ -248,6 +248,7 @@ a {
 
 .btn:focus-visible,
 .cta-so:focus-visible,
+.cta-diet:focus-visible,
 .cta-agenda:focus-visible,
 .cta-quiet:focus-visible,
 .cta-wa:focus-visible,
@@ -290,6 +291,7 @@ a {
 }
 
 .cta-so,
+.cta-diet,
 .cta-wa,
 .cta-agenda {
   display: block;
@@ -306,6 +308,7 @@ a {
 }
 
 .cta-so strong,
+.cta-diet strong,
 .cta-wa strong,
 .cta-agenda strong {
   display: block;
@@ -314,26 +317,77 @@ a {
 }
 
 .cta-so span,
+.cta-diet span,
 .cta-wa span,
 .cta-agenda span {
   display: block;
   margin-top: 0.15rem;
   color: rgba(255, 255, 255, 0.84);
   font-size: 0.875rem;
+  line-height: 1.35;
 }
 
-.cta-so .cta-kicker {
+.cta-so .cta-kicker,
+.cta-diet .cta-kicker {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #d7efe8;
   margin-top: 0;
+}
+
+.cta-so .cta-kicker {
+  color: #d7efe8;
+}
+
+.cta-diet .cta-kicker {
+  color: #fde7d4;
+}
+
+.cta-diet {
+  background: #9a3412;
+  color: #ffffff;
+  padding: 1.05rem 1.1rem 1rem;
+  box-shadow: 0 8px 20px rgba(154, 52, 18, 0.22);
 }
 
 .cta-wa {
   background: #1f8f4e;
   padding: 0.95rem 1.1rem;
+}
+
+.benefit-block {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.benefit-list {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.benefit-list a {
+  display: block;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.benefit-list strong {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.benefit-list span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
 }
 
 .cta-agenda {

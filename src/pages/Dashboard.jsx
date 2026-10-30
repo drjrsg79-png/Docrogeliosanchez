@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
 import ClinicCard from '../components/ClinicCard'
-import { AGENDA_DETAIL, AGENDA_URL, DOCTOR_SHORT, SO_PRICE } from '../lib/clinic'
+import Prestaciones from '../components/Prestaciones'
+import { DOCTOR_SHORT } from '../lib/clinic'
 
 function Icon({ name, color }) {
   const common = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -33,45 +34,11 @@ function Icon({ name, color }) {
   }
 }
 
-const PRINCIPALES = [
-  {
-    href: '/segunda-opinion',
-    label: 'Segunda opinión',
-    detail: `El doctor revisa tu caso · ${SO_PRICE}`,
-    icon: 'clipboard',
-    color: '#0f4c5c',
-  },
-  {
-    href: AGENDA_URL,
-    external: true,
-    label: 'Agendar cita',
-    detail: AGENDA_DETAIL,
-    icon: 'calendar',
-    color: '#0f4c5c',
-  },
-  {
-    href: '/antecedentes',
-    label: 'Historial médico',
-    detail: 'Antecedentes, medicamentos y alergias',
-    icon: 'notes',
-    color: '#0f4c5c',
-  },
-  {
-    href: '/chat',
-    label: 'Orientación',
-    detail: 'Dudas del día a día. No sustituye la consulta.',
-    icon: 'chat',
-    color: '#0f4c5c',
-  },
-]
-
 const MAS = [
   { href: '/peso', label: 'Peso', icon: 'scale', color: '#0f4c5c' },
   { href: '/comidas', label: 'Comidas', icon: 'fork', color: '#a15c00' },
   { href: '/ejercicio', label: 'Ejercicio', icon: 'run', color: '#1e6b3c' },
   { href: '/agua', label: 'Agua', icon: 'glass', color: '#1565c0' },
-  { href: '/rutina', label: 'Rutina', icon: 'dumbbell', color: '#1e6b3c' },
-  { href: '/dieta', label: 'Plan de alimentación', icon: 'clipboard', color: '#a15c00' },
 ]
 
 function formatMeasuredAt(iso) {
@@ -125,10 +92,6 @@ export default function Dashboard() {
   if (loading) return <div className="container">Cargando...</div>
 
   const antecedentesIncompletos = !profile?.diagnosis_year && !profile?.diabetes_type
-  const principales = PRINCIPALES.map((item) => {
-    if (item.href !== '/antecedentes' || !antecedentesIncompletos) return item
-    return { ...item, detail: 'Falta completar tu historial' }
-  })
 
   return (
     <div className="page">
@@ -159,40 +122,26 @@ export default function Dashboard() {
           )}
         </Link>
 
-        <div className="section-label">Para ti</div>
-        <div className="action-list">
-          {principales.map((item) => {
-            const inner = (
-              <>
-                <span className="icon-circle" style={{ backgroundColor: `${item.color}18` }}>
-                  <Icon name={item.icon} color={item.color} />
-                </span>
-                <span>
-                  <span className="card-title">{item.label}</span>
-                  <span className="card-meta" style={{ display: 'block' }}>{item.detail}</span>
-                </span>
-              </>
-            )
-            if (item.external) {
-              return (
-                <a key={item.href} href={item.href} className="action-row" target="_blank" rel="noopener noreferrer">
-                  {inner}
-                </a>
-              )
-            }
-            return (
-              <Link key={item.href} to={item.href} className="action-row">
-                {inner}
-              </Link>
-            )
-          })}
-        </div>
+        <Link to="/dieta" className="cta-diet">
+          <span className="cta-kicker">Tu dieta</span>
+          <strong>Plan de alimentación</strong>
+          <span>Saca tu dieta aquí. El plan de la semana se arma con tu caso.</span>
+        </Link>
+
+        {antecedentesIncompletos && (
+          <Link to="/antecedentes" className="card" style={{ display: 'block', textDecoration: 'none', backgroundColor: '#fdf1e3', borderColor: '#a15c00' }}>
+            <div className="card-title" style={{ color: '#a15c00' }}>Completa tu historial médico</div>
+            <div className="card-meta" style={{ color: '#a15c00' }}>Así el plan de alimentación sale más cercano a tu caso.</div>
+          </Link>
+        )}
+
+        <Prestaciones />
 
         <ClinicCard />
 
         <details className="more-tools">
-          <summary>Más</summary>
-          <p className="card-meta">Peso, comidas, agua y planes. El seguimiento principal es la glucosa y tu historial.</p>
+          <summary>Más registros</summary>
+          <p className="card-meta">Peso, comidas, ejercicio y agua. Tu dieta está arriba, en Plan de alimentación.</p>
           <div className="tool-grid">
             {MAS.map((item) => (
               <Link key={item.href} to={item.href} className="tool-tile">
