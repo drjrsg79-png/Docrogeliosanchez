@@ -47,7 +47,7 @@ export default function DietPlan() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        navigate('/login')
+        navigate('/login?next=/dieta')
         return
       }
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -167,7 +167,7 @@ export default function DietPlan() {
     <div className="page">
       <div className="header">
         <div className="header-title">Plan de alimentación</div>
-        <div className="header-subtitle">Plan semanal generado según tu perfil</div>
+        <div className="header-subtitle">Aquí sacas tu dieta de la semana</div>
       </div>
 
       <div className="container" style={{ flex: 1 }}>
@@ -191,7 +191,7 @@ export default function DietPlan() {
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={generating}>
-              {generating ? (progress || 'Generando...') : 'Generar plan'}
+              {generating ? (progress || 'Generando...') : 'Sacar mi dieta'}
             </button>
           </form>
           {generating && (

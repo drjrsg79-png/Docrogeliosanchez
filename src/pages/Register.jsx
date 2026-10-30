@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { AGENDA_URL, DOCTOR_SHORT, SPECIALTIES, SO_PRICE, WA_CLINIC_MESSAGE, safeNextPath, whatsappUrl } from '../lib/clinic'
 
 const BENEFICIOS = [
-  { titulo: 'Seguimiento diario', detalle: 'Glucosa, peso, comidas, ejercicio y agua en un solo lugar.' },
-  { titulo: 'Alertas automáticas', detalle: 'Te avisamos si tu glucosa está fuera de rango.' },
-  { titulo: 'Escanea tu comida', detalle: 'Foto de tu platillo y calculamos calorías y macros.' },
-  { titulo: 'Planes con IA', detalle: 'Alimentación y ejercicio semanal, personalizados.' },
-  { titulo: 'Descarga y comparte', detalle: 'Exporta tus planes en PDF y compártelos por WhatsApp.' },
-  { titulo: 'Tu doctor te acompaña', detalle: 'Damos seguimiento a tu evolución para ajustar tu tratamiento.' },
+  { titulo: 'Plan de alimentación', detalle: 'Saca tu dieta aquí. El plan de la semana se arma con tu caso.' },
+  { titulo: 'Segunda opinión', detalle: `El doctor revisa tu caso y tus estudios. ${SO_PRICE}. No necesitas cuenta para pedirla.` },
+  { titulo: 'Glucosa', detalle: 'Registra tus mediciones y tenlas a la mano en tu siguiente consulta.' },
+  { titulo: 'Historial médico', detalle: 'Antecedentes, medicamentos y alergias en un solo lugar.' },
+  { titulo: 'Orientación', detalle: 'Resuelve dudas del día a día. No sustituye la consulta.' },
+  { titulo: 'La clínica', detalle: 'WhatsApp y sucursales para agendar en Querétaro, Polanco, Tlalnepantla o Tapachula.' },
+  { titulo: 'Otros registros', detalle: 'Si te sirven, también puedes anotar peso, comidas o ejercicio.' },
 ]
 
 export default function Register() {
@@ -21,6 +23,7 @@ export default function Register() {
   const [confirmMessage, setConfirmMessage] = useState('')
   const [showBenefits, setShowBenefits] = useState(false)
   const navigate = useNavigate()
+  const nextPath = safeNextPath(useLocation().search)
 
   async function handleRegister(e) {
     e.preventDefault()
@@ -43,9 +46,9 @@ export default function Register() {
     }
 
     if (data.session) {
-      navigate('/dashboard')
+      navigate(nextPath || '/dashboard')
     } else {
-      setConfirmMessage('Tu cuenta se creo correctamente. Revisa tu correo para confirmar tu registro antes de iniciar sesion.')
+      setConfirmMessage('Tu cuenta se creó correctamente. Revisa tu correo para confirmar tu registro antes de iniciar sesión.')
     }
   }
 
@@ -53,16 +56,16 @@ export default function Register() {
     <div className="page">
       <div className="header" style={{ padding: '1.5rem 1.25rem' }}>
         <div className="header-title" style={{ fontSize: '1.375rem', fontWeight: 700, lineHeight: 1.2 }}>
-          Dr. José Rogelio Sánchez García
+          {DOCTOR_SHORT}
         </div>
         <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Internista · Nutriólogo · Experto en Diabetes
+          {SPECIALTIES}
         </div>
       </div>
 
       <div className="auth-container" style={{ maxWidth: '480px', margin: '0 auto', padding: '1.5rem 1.25rem 1rem' }}>
         <h1 className="page-title" style={{ marginTop: 0 }}>Crear cuenta</h1>
-        <p className="page-subtitle">Registrate para comenzar tu seguimiento clinico.</p>
+        <p className="page-subtitle">Regístrate para comenzar tu seguimiento clínico.</p>
 
         {confirmMessage ? (
           <div className="card">{confirmMessage}</div>
@@ -73,28 +76,34 @@ export default function Register() {
               <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Telefono</label>
+              <label>Teléfono</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Correo electronico</label>
+              <label>Correo electrónico</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Contrasena</label>
+              <label>Contraseña</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
 
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className="alert-error">{error}</div>}
 
-            <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '0.5rem' }}>
               {loading ? 'Creando cuenta...' : 'Crear cuenta'}
             </button>
           </form>
         )}
 
         <p className="page-subtitle" style={{ textAlign: 'center', marginTop: '1.25rem' }}>
-          Ya tienes cuenta? <Link to="/login">Inicia sesion</Link>
+          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+        </p>
+        <p className="public-links">
+          <Link to="/segunda-opinion">Segunda opinión</Link>
+          <a href={AGENDA_URL} target="_blank" rel="noopener noreferrer">Agendar cita</a>
+          <a href={whatsappUrl(WA_CLINIC_MESSAGE)} target="_blank" rel="noopener noreferrer">WhatsApp clínica</a>
+          <Link to="/">Inicio</Link>
         </p>
       </div>
 
@@ -116,7 +125,7 @@ export default function Register() {
             fontSize: '0.9375rem',
           }}
         >
-          Que puedes hacer aqui
+          Qué puedes hacer aquí
           <span>{showBenefits ? '▲' : '▼'}</span>
         </button>
 

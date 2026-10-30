@@ -143,15 +143,15 @@ export default function AIChat() {
         <Link to="/dashboard" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.875rem', opacity: 0.85 }}>
           ‹ Volver
         </Link>
-        <div className="header-title" style={{ marginTop: '0.5rem' }}>Mi asistente</div>
+        <div className="header-title" style={{ marginTop: '0.5rem' }}>Orientación</div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', backgroundColor: '#f4f6f7' }}>
         {messages.length === 0 && (
           <div className="card" style={{ textAlign: 'center' }}>
             <div className="card-meta">
-              Puedes preguntarme cualquier duda sobre tu salud: alimentación, ejercicio, manejo de peso, diabetes u otros temas.
-              Para cambios de tratamiento, siempre consulta al Dr. Rogelio.
+              Pregunta dudas sobre diabetes, heridas, medicamentos o tus registros.
+              Esto orienta; el tratamiento lo decide el Dr. Rogelio.
             </div>
           </div>
         )}

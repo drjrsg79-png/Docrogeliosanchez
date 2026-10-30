@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { AGENDA_URL, WA_CLINIC_MESSAGE, safeNextPath, whatsappUrl } from '../lib/clinic'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -8,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const nextPath = safeNextPath(useLocation().search)
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -36,7 +38,7 @@ export default function Login() {
     if (profile?.role === 'doctor') {
       navigate('/doctor')
     } else {
-      navigate('/dashboard')
+      navigate(nextPath || '/dashboard')
     }
   }
 
@@ -76,7 +78,13 @@ export default function Login() {
           <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
         </p>
         <p className="footer-link">
-          ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+          ¿No tienes cuenta? <Link to={nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : '/register'}>Regístrate aquí</Link>
+        </p>
+        <p className="public-links">
+          <Link to="/segunda-opinion">Segunda opinión</Link>
+          <a href={AGENDA_URL} target="_blank" rel="noopener noreferrer">Agendar cita</a>
+          <a href={whatsappUrl(WA_CLINIC_MESSAGE)} target="_blank" rel="noopener noreferrer">WhatsApp clínica</a>
+          <Link to="/">Inicio</Link>
         </p>
       </div>
     </div>
