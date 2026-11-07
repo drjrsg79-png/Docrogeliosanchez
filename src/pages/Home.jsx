@@ -68,6 +68,9 @@ export default function Home() {
             {DOCTOR_FULL} atiende medicina interna, terapia intensiva, heridas y pie diabético.
             En esta app sacas tu dieta, registras tu glucosa y guardas tu historial. La segunda opinión y las citas se coordinan con él y con la clínica.
           </p>
+          <p className="card-meta" style={{ marginTop: '0.65rem' }}>
+            <Link to="/perfil">Perfil profesional del doctor</Link>
+          </p>
         </section>
 
         <ClinicCard includeWhatsApp={false} />

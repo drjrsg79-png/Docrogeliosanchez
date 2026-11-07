@@ -17,12 +17,14 @@ import MedicalHistory from './pages/MedicalHistory'
 import AIChat from './pages/AIChat'
 import Home from './pages/Home'
 import SegundaOpinion from './pages/SegundaOpinion'
+import Perfil from './pages/Perfil'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/segunda-opinion" element={<SegundaOpinion />} />
+      <Route path="/perfil" element={<Perfil />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
