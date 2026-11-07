@@ -27,6 +27,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body.perfil-wide {
+  background: #f8f7f3;
+}
+
+body.perfil-wide #root {
+  max-width: none;
+  box-shadow: none;
+}
+
 a {
   color: var(--color-primary);
   text-decoration: none;
