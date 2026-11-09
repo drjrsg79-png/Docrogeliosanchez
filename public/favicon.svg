@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#115e74"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Simplified bold stethoscope, safe zone -->
+  <g fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- U tubing -->
+    <path d="M168 120 C168 88, 200 72, 232 72 C264 72, 296 88, 296 120"/>
+    <path d="M168 120 L168 220"/>
+    <path d="M296 120 L296 200"/>
+    <!-- curve to chest piece -->
+    <path d="M168 220 C168 300, 240 330, 310 290"/>
+  </g>
+  <!-- earpieces as solid discs -->
+  <circle cx="168" cy="118" r="22" fill="#ffffff"/>
+  <circle cx="296" cy="118" r="22" fill="#ffffff"/>
+  <!-- diaphragm -->
+  <circle cx="340" cy="270" r="52" fill="none" stroke="#ffffff" stroke-width="26"/>
+  <circle cx="340" cy="270" r="18" fill="#e6f4f1"/>
+  <!-- check badge -->
+  <circle cx="360" cy="370" r="62" fill="#ffffff"/>
+  <path d="M330 370 L350 390 L396 344" fill="none" stroke="#0f766e" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
