@@ -81,6 +81,11 @@
   font-size: 1.05rem;
 }
 
+.perfil-so {
+  margin-top: 0.7rem;
+  background: #0a5ea8;
+}
+
 .perfil-agenda span {
   display: block;
   margin-top: 0.2rem;
