@@ -4,6 +4,7 @@ import './Perfil.css'
 
 const PROFILE_URL = 'https://docrogeliosanchez.com/perfil'
 const AGENDA_URL = 'https://miadmon.com/agendar'
+const SO_URL = 'https://segunda-opinion-internista-419.netlify.app/?origen=perfil'
 const SEP_URL = 'https://cedulaprofesional.sep.gob.mx/'
 const PHONES = [
   { display: '55 6932 0331', tel: '+525569320331' },
@@ -44,6 +45,10 @@ export default function Perfil() {
           <a className="perfil-agenda" href={AGENDA_URL} target="_blank" rel="noopener noreferrer">
             Ver horarios y agendar cita
             <span>Polanco · miadmon.com/agendar</span>
+          </a>
+          <a className="perfil-agenda perfil-so" href={SO_URL} target="_blank" rel="noopener noreferrer">
+            Segunda opinión en línea: paga y sube tus estudios · $1,000 MXN
+            <span>Videollamada para todo México</span>
           </a>
           <div className="perfil-phones">
             {PHONES.map((phone) => (
