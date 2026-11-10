@@ -138,7 +138,8 @@ Forma: {"c":[{"t":"desayuno","p":"nombre","po":"medidas y g","i":[["item","1 taz
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 1200,
+        max_tokens: 2000,
+        thinking: { type: 'disabled' },
         system: systemPrompt,
         messages: [{ role: 'user', content: `JSON compacto de ${day} (${seg.label}), forma {"c":[...]}` }],
       }),
@@ -150,8 +151,11 @@ Forma: {"c":[{"t":"desayuno","p":"nombre","po":"medidas y g","i":[["item","1 taz
       return json({ error: data.error?.message || 'Error al generar el día' }, 500)
     }
 
-    const textContent = data.content?.find((c) => c.type === 'text')?.text || ''
-    console.log('diet_day', day, segment, 'stop', data.stop_reason, 'chars', textContent.length)
+    const textContent = data.content?.find((c) => c.type === 'text')?.text
+      || data.content?.map((c) => c.text).filter(Boolean).join('\n')
+      || ''
+    const contentTypes = (data.content || []).map((c) => c.type)
+    console.log('diet_day', day, segment, 'stop', data.stop_reason, 'chars', textContent.length, 'types', contentTypes)
 
     let parsed
     try {
@@ -163,6 +167,8 @@ Forma: {"c":[{"t":"desayuno","p":"nombre","po":"medidas y g","i":[["item","1 taz
         debug: {
           stop: data.stop_reason,
           chars: textContent.length,
+          types: (data.content || []).map((c) => c.type),
+          keys: Object.keys(data || {}),
           head: textContent.slice(0, 500),
           tail: textContent.slice(-300),
         },
