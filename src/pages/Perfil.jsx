@@ -43,7 +43,7 @@ export default function Perfil() {
         <section className="perfil-actions">
           <a className="perfil-agenda" href={AGENDA_URL} target="_blank" rel="noopener noreferrer">
             Ver horarios y agendar cita
-            <span>Polanco · miadmon.com/agendar</span>
+            <span>Polanco u Hospital Médica Sur (lunes y viernes 2:00–8:00 pm) · miadmon.com/agendar</span>
           </a>
           <a className="perfil-agenda perfil-so" href={SO_URL} target="_blank" rel="noopener noreferrer">
             Segunda opinión en línea: paga y sube tus estudios · $1,000 MXN
