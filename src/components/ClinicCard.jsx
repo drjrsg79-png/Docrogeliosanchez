@@ -1,5 +1,7 @@
 import {
   CLINIC_NAME,
+  MEDICA_SUR_ADDRESS,
+  MEDICA_SUR_HOURS,
   POLANCO_ADDRESS,
   SUCURSALES,
   WA_CLINIC_MESSAGE,
@@ -18,6 +20,7 @@ export default function ClinicCard({ includeWhatsApp = true }) {
         ))}
       </div>
       <p className="card-meta">Consultorio base: {POLANCO_ADDRESS}.</p>
+      <p className="card-meta">Hospital Médica Sur: {MEDICA_SUR_ADDRESS} · {MEDICA_SUR_HOURS}.</p>
       {includeWhatsApp && (
         <div className="clinic-actions">
           <a
