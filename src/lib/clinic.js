@@ -1,5 +1,7 @@
 export const DOCTOR_SHORT = 'Dr. Rogelio Sánchez'
 export const DOCTOR_FULL = 'Dr. José Rogelio Sánchez García'
+export const CEDULAS = '4273375 y 6525546'
+export const DOCTOR_DIET_LINE = 'Dr. José Rogelio Sánchez García · Medicina Interna · Cédulas 4273375 y 6525546'
 export const SPECIALTIES = 'Medicina interna · Terapia intensiva · Pie diabético'
 export const CLINIC_NAME = 'Clínica de Heridas y Pie Diabético'
 export const SUCURSALES = ['Querétaro', 'Polanco', 'Médica Sur', 'Tapachula']

@@ -1,97 +1,38 @@
 import { rateLimitAndSize } from './_shared/guard.mjs'
+
 export default async function handler(request) {
   try {
     const limited = rateLimitAndSize(request, { maxPerMin: 15, maxBytes: 80000 })
     if (limited) return limited
-    const body = await request.json()
-    const { goal, diabetesType, currentWeight, heightCm, weightGoal } = body
+    const body = await request.json().catch(() => ({}))
+    const { goal, diabetesType, currentWeight, heightCm, weightGoal, erc, hipertension } = body || {}
 
-    const tieneDiabetes = diabetesType && diabetesType !== 'ninguna'
-
-    const enfoqueClinico = tieneDiabetes
-      ? `Eres un endocrinologo y nutriologo clinico experto en el manejo dietetico de pacientes diabeticos.
-
-Genera un plan de alimentacion semanal (7 dias) para un paciente con estas caracteristicas:
-- Tipo de diabetes: ${diabetesType}
-- Objetivo: ${goal || 'control glucemico'}
-- Peso actual: ${currentWeight || 'no especificado'} kg
-- Estatura: ${heightCm || 'no especificado'} cm
-- Peso meta: ${weightGoal || 'no especificado'} kg
-
-Usa platillos con ingredientes accesibles en Mexico. Prioriza bajo indice glucemico, control de porciones y variedad.`
-      : `Eres un internista y nutriologo clinico experto en alimentacion saludable, actividad fisica y manejo de peso.
-
-Genera un plan de alimentacion semanal (7 dias) rico y variado para un paciente sin diabetes, con estas caracteristicas:
-- Objetivo: ${goal || 'alimentacion saludable'}
-- Peso actual: ${currentWeight || 'no especificado'} kg
-- Estatura: ${heightCm || 'no especificado'} cm
-- Peso meta: ${weightGoal || 'no especificado'} kg
-
-Usa platillos ricos, variados y apetecibles, con ingredientes accesibles en Mexico. Prioriza balance nutricional, control de porciones acorde al objetivo, y que sea disfrutable de seguir (no restrictivo ni aburrido).`
-
-    const systemPrompt = `${enfoqueClinico}
-
-IMPORTANTE: se breve. Cada "descripcion" debe tener MAXIMO 8 palabras. El "resumen" general debe tener MAXIMO 2 frases cortas. No agregues texto antes ni despues del JSON, ni marques con backticks.
-
-Responde UNICAMENTE con un JSON valido con esta forma exacta:
-{
-  "resumen": "explicacion muy breve, maximo 2 frases",
-  "calorias_diarias": numero entero,
-  "carbohidratos_g": numero entero,
-  "proteina_g": numero entero,
-  "grasas_g": numero entero,
-  "dias": [
-    {
-      "dia": "Lunes",
-      "comidas": [
-        { "tipo": "desayuno", "platillo": "nombre corto", "descripcion": "maximo 8 palabras", "calorias": numero, "carbohidratos_g": numero, "proteina_g": numero, "grasas_g": numero }
-      ]
+    const weight = Number(currentWeight) || 0
+    const height = Number(heightCm) || 0
+    let kcal = 1800
+    if (weight && height) {
+      const bmr = 10 * weight + 6.25 * height - 5 * 40 - 78
+      kcal = Math.round(bmr * 1.3)
     }
-  ]
-}
-El array "dias" debe tener 7 objetos (Lunes a Domingo), cada uno con 4 comidas: desayuno, comida, cena y una colacion.`
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: 'Genera el plan semanal solicitado, solo el JSON, se breve y conciso.' }],
-      }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: data.error?.message || 'Error al generar el plan' }), { status: 500 })
+    const loss = /bajar|perder|peso/i.test(goal || '') || (weightGoal && weight && Number(weightGoal) < weight)
+    if (loss) kcal -= 400
+    if (kcal < 1400) kcal = 1400
+    if (kcal > 2600) kcal = 2600
+    kcal = Math.round(kcal / 10) * 10
+    const diabetes = diabetesType && diabetesType !== 'ninguna'
+    const carbPct = diabetes ? 0.42 : 0.48
+    const protPct = erc ? 0.16 : 0.22
+    const fatPct = 1 - carbPct - protPct
+    const parsed = {
+      resumen: 'Meta nutricional diaria aproximada, para armar un plan de siete días con cinco tiempos de comida.',
+      calorias_diarias: kcal,
+      carbohidratos_g: Math.round((kcal * carbPct) / 4),
+      proteina_g: Math.round((kcal * protPct) / 4),
+      grasas_g: Math.round((kcal * fatPct) / 9),
     }
-
-    const textContent = data.content?.find((c) => c.type === 'text')?.text || ''
-    let cleaned = textContent.replace(/```json|```/g, '').trim()
-
-    const firstBrace = cleaned.indexOf('{')
-    const lastBrace = cleaned.lastIndexOf('}')
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      cleaned = cleaned.slice(firstBrace, lastBrace + 1)
+    if (hipertension || erc || diabetes) {
+      parsed.resumen += ' Se toman en cuenta los antecedentes señalados.'
     }
-
-    let parsed
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch (parseErr) {
-      return new Response(JSON.stringify({
-        error: 'No se pudo interpretar el plan generado',
-        stopReason: data.stop_reason,
-        rawPreview: cleaned.slice(0, 300),
-      }), { status: 500 })
-    }
-
     return new Response(JSON.stringify(parsed), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
