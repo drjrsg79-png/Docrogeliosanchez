@@ -1,7 +1,5 @@
 import {
   CLINIC_NAME,
-  CLINIC_PHONE_DISPLAY,
-  CLINIC_PHONE_TEL,
   POLANCO_ADDRESS,
   SUCURSALES,
   WA_CLINIC_MESSAGE,
@@ -20,8 +18,8 @@ export default function ClinicCard({ includeWhatsApp = true }) {
         ))}
       </div>
       <p className="card-meta">Consultorio base: {POLANCO_ADDRESS}.</p>
-      <div className="clinic-actions">
-        {includeWhatsApp && (
+      {includeWhatsApp && (
+        <div className="clinic-actions">
           <a
             className="btn btn-wa"
             href={whatsappUrl(WA_CLINIC_MESSAGE)}
@@ -30,11 +28,8 @@ export default function ClinicCard({ includeWhatsApp = true }) {
           >
             WhatsApp {WHATSAPP_DISPLAY}
           </a>
-        )}
-        <a className="btn btn-secondary" href={`tel:${CLINIC_PHONE_TEL}`}>
-          Llamar {CLINIC_PHONE_DISPLAY}
-        </a>
-      </div>
+        </div>
+      )}
     </section>
   )
 }
