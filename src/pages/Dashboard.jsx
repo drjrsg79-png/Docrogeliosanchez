@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
-import { supabase } from '../lib/supabase'
+import { loadProfile, loadLogs, LOCAL_NOTE } from '../lib/localStore'
 import ClinicCard from '../components/ClinicCard'
 import Prestaciones from '../components/Prestaciones'
 import { DOCTOR_SHORT } from '../lib/clinic'
@@ -55,39 +55,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [latestGlucose, setLatestGlucose] = useState(null)
   const [glucoseTrend, setGlucoseTrend] = useState([])
-  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(profileData)
-
-      const { data: glucoseRecent } = await supabase
-        .from('glucose_logs')
-        .select('value_mg_dl, measured_at')
-        .eq('user_id', user.id)
-        .order('measured_at', { ascending: false })
-        .limit(7)
-      if (glucoseRecent && glucoseRecent.length > 0) {
-        setLatestGlucose(glucoseRecent[0])
-        setGlucoseTrend([...glucoseRecent].reverse().map((g) => ({ valor: g.value_mg_dl })))
-      }
-
-      setLoading(false)
+    const profileData = loadProfile()
+    setProfile(profileData)
+    const glucoseRecent = loadLogs('glucose_logs').slice(0, 7)
+    if (glucoseRecent.length > 0) {
+      setLatestGlucose(glucoseRecent[0])
+      setGlucoseTrend([...glucoseRecent].reverse().map((g) => ({ valor: g.value_mg_dl })))
     }
-    load()
-  }, [navigate])
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
+    setLoading(false)
+  }, [])
 
   if (loading) return <div className="container">Cargando...</div>
 
@@ -96,11 +74,15 @@ export default function Dashboard() {
   return (
     <div className="page">
       <div className="header">
-        <div className="header-title">{profile?.full_name || 'Paciente'}</div>
-        <div className="header-subtitle">Tu seguimiento con {DOCTOR_SHORT}</div>
+        <div className="header-title">{profile?.full_name || 'Mis registros'}</div>
+        <div className="header-subtitle">Herramientas con {DOCTOR_SHORT}</div>
       </div>
 
       <div className="container" style={{ flex: 1 }}>
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
+        </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
         <Link to="/glucosa" className="glucose-hero">
           <div>
             <div className="section-label" style={{ marginBottom: '0.35rem' }}>Glucosa</div>
@@ -154,9 +136,9 @@ export default function Dashboard() {
           </div>
         </details>
 
-        <button onClick={handleLogout} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
-          Cerrar sesión
-        </button>
+        <Link to="/" className="btn btn-secondary" style={{ marginTop: '1.5rem', display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+          Volver al inicio
+        </Link>
       </div>
     </div>
   )

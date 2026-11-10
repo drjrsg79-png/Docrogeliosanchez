@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { loadLogs, prependLog, LOCAL_NOTE } from '../lib/localStore'
 import Toast from '../components/Toast'
 
 const DAILY_GOAL_ML = 2000
@@ -11,53 +11,30 @@ export default function WaterLog() {
   const [customAmount, setCustomAmount] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [userId, setUserId] = useState(null)
   const [toast, setToast] = useState('')
-  const navigate = useNavigate()
+
+  function todaysLogs() {
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+    const startIso = startOfDay.toISOString()
+    return loadLogs('water_logs').filter((l) => l.logged_at >= startIso)
+  }
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
+    setLogs(todaysLogs())
+    setLoading(false)
+  }, [])
 
-      const startOfDay = new Date()
-      startOfDay.setHours(0, 0, 0, 0)
-
-      const { data } = await supabase
-        .from('water_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('logged_at', startOfDay.toISOString())
-        .order('logged_at', { ascending: false })
-
-      setLogs(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
-
-  async function addWater(amountMl) {
+  function addWater(amountMl) {
     if (!amountMl) return
     setSaving(true)
-
-    const { data, error } = await supabase
-      .from('water_logs')
-      .insert({
-        user_id: userId,
-        amount_ml: amountMl,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setLogs([data, ...logs])
-      setCustomAmount('')
-      setToast(`${amountMl} ml agregados`)
-    }
+    prependLog('water_logs', {
+      amount_ml: amountMl,
+      logged_at: new Date().toISOString(),
+    }, 200)
+    setLogs(todaysLogs())
+    setCustomAmount('')
+    setToast(`${amountMl} ml agregados`)
     setSaving(false)
   }
 
@@ -76,9 +53,10 @@ export default function WaterLog() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         <div className="card">
           <div className="section-label">Hoy</div>

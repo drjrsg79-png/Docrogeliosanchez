@@ -1,5 +1,8 @@
+import { rateLimitAndSize } from './_shared/guard.mjs'
 export default async function handler(request) {
   try {
+    const limited = rateLimitAndSize(request, { maxPerMin: 30, maxBytes: 80000 })
+    if (limited) return limited
     const body = await request.json()
     const { day, conditionNotes, goal } = body
 

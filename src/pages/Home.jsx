@@ -25,13 +25,13 @@ export default function Home() {
 
       <main className="container hub-main">
         <p className="hub-lead">
-          Aquí sacas tu dieta. También sigues tu glucosa, pides una segunda opinión o agendas en la clínica.
+          Aquí sacas tu dieta, tu rutina y tus registros, sin crear cuenta. También puedes pedir una segunda opinión o agendar en la clínica.
         </p>
 
         <Link to="/dieta" className="cta-diet">
           <span className="cta-kicker">Tu dieta</span>
           <strong>Plan de alimentación</strong>
-          <span>Saca tu dieta aquí. Entra y obtienes el plan de la semana.</span>
+          <span>Saca tu dieta aquí. Obtienes el plan de la semana en este teléfono.</span>
         </Link>
 
         <Link to="/segunda-opinion" className="cta-so">
@@ -55,18 +55,18 @@ export default function Home() {
           <span>{WHATSAPP_DISPLAY}</span>
         </a>
 
-        <div className="auth-pair">
-          <Link to="/login" className="btn btn-secondary">Entrar</Link>
-          <Link to="/register" className="btn btn-secondary">Crear cuenta</Link>
-        </div>
+        <Link to="/dashboard" className="cta-quiet">
+          <strong>Mis registros</strong>
+          <span>Glucosa, peso, comidas y más. Se quedan en este teléfono.</span>
+        </Link>
 
-        <Prestaciones needsAccount />
+        <Prestaciones />
 
         <section className="card">
           <h2 className="card-title">Quién es el doctor</h2>
           <p className="card-meta clinic-copy">
             {DOCTOR_FULL} atiende medicina interna, terapia intensiva, heridas y pie diabético.
-            En esta app sacas tu dieta, registras tu glucosa y guardas tu historial. La segunda opinión y las citas se coordinan con él y con la clínica.
+            En esta app sacas tu dieta, registras tu glucosa y guardas tu historial en este teléfono. La segunda opinión y las citas se coordinan con él y con la clínica.
           </p>
           <p className="card-meta" style={{ marginTop: '0.65rem' }}>
             <Link to="/perfil">Perfil profesional del doctor</Link>
@@ -81,7 +81,7 @@ export default function Home() {
         </a>
 
         <p className="fine-print">
-          Tus datos de la cuenta son confidenciales.
+          Tus registros se quedan en este teléfono. No se envían a un expediente en línea.
         </p>
       </main>
     </div>

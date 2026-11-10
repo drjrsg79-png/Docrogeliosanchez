@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
-import { supabase } from '../lib/supabase'
+import { loadProfile, saveProfile, loadStore, saveStore, LOCAL_NOTE } from '../lib/localStore'
 import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addVideoLink, addFootersToAllPages } from '../lib/pdfStyle'
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -34,40 +34,17 @@ function youtubeSearchUrl(query) {
 }
 
 export default function DietPlan() {
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState(() => loadProfile())
   const [goal, setGoal] = useState('')
-  const [plan, setPlan] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState(() => loadStore('diet-plan', null))
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
-  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login?next=/dieta')
-        return
-      }
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(data)
-
-      const { data: weightData } = await supabase
-        .from('weight_logs')
-        .select('weight_kg')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (weightData) {
-        setProfile((prev) => ({ ...prev, current_weight: weightData.weight_kg }))
-      }
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
+    const stored = loadStore('diet-plan', null)
+    if (stored) setPlan(stored)
+  }, [])
 
   async function handleGenerate(e) {
     e.preventDefault()
@@ -123,6 +100,9 @@ export default function DietPlan() {
 
     setProgress('')
     setGenerating(false)
+    const complete = { ...summary, dias }
+    setPlan(complete)
+    saveStore('diet-plan', complete)
   }
 
   function handleDownloadPdf() {
@@ -161,8 +141,6 @@ export default function DietPlan() {
     window.open(url, '_blank')
   }
 
-  if (loading) return <div className="container">Cargando...</div>
-
   return (
     <div className="page">
       <div className="header">
@@ -171,16 +149,61 @@ export default function DietPlan() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
 
         <div className="card">
           <div className="section-label" style={{ marginBottom: '1rem' }}>Generar plan personalizado</div>
+          <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
           <p className="card-meta" style={{ marginBottom: '1rem' }}>
             El plan se genera día por día para garantizar mayor precisión. El proceso completo toma aproximadamente 1 minuto — verás cada día aparecer conforme se va generando, no es necesario recargar la página.
           </p>
-          <form onSubmit={handleGenerate}>
+          <form onSubmit={(e) => {
+              saveProfile({
+                full_name: profile?.full_name || '',
+                diabetes_type: profile?.diabetes_type || '',
+                current_weight: profile?.current_weight ? Number(profile.current_weight) : null,
+                height_cm: profile?.height_cm ? Number(profile.height_cm) : null,
+              })
+              handleGenerate(e)
+            }}>
+            <div className="field">
+              <label>Nombre (opcional)</label>
+              <input
+                type="text"
+                value={profile?.full_name || ''}
+                onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))}
+                placeholder="Para el PDF"
+              />
+            </div>
+            <div className="field">
+              <label>Tipo de diabetes (opcional)</label>
+              <input
+                type="text"
+                value={profile?.diabetes_type || ''}
+                onChange={(e) => setProfile((p) => ({ ...p, diabetes_type: e.target.value }))}
+                placeholder="Ej. 2, o déjalo vacío si no aplica"
+              />
+            </div>
+            <div className="field">
+              <label>Peso actual (kg, opcional)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={profile?.current_weight || ''}
+                onChange={(e) => setProfile((p) => ({ ...p, current_weight: e.target.value }))}
+              />
+            </div>
+            <div className="field">
+              <label>Estatura (cm, opcional)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={profile?.height_cm || ''}
+                onChange={(e) => setProfile((p) => ({ ...p, height_cm: e.target.value }))}
+              />
+            </div>
             <div className="field">
               <label>Objetivo</label>
               <input

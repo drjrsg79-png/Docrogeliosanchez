@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { loadLogs, loadProfile, prependLog, LOCAL_NOTE } from '../lib/localStore'
 import Toast from '../components/Toast'
 
 const MEAL_TYPES = [
@@ -61,7 +61,6 @@ export default function MealLog() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [lastResult, setLastResult] = useState(null)
-  const [userId, setUserId] = useState(null)
   const [diabetesType, setDiabetesType] = useState(null)
   const [toast, setToast] = useState('')
 
@@ -75,36 +74,12 @@ export default function MealLog() {
   const [textEstimateError, setTextEstimateError] = useState('')
   const [textEstimateReasoning, setTextEstimateReasoning] = useState('')
 
-  const navigate = useNavigate()
-
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('diabetes_type')
-        .eq('id', user.id)
-        .single()
-      setDiabetesType(profile?.diabetes_type || null)
-
-      const { data } = await supabase
-        .from('meals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(30)
-
-      setMeals(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
+    const profile = loadProfile()
+    setDiabetesType(profile?.diabetes_type || null)
+    setMeals(loadLogs('meals').slice(0, 30))
+    setLoading(false)
+  }, [])
 
   function handlePhotoSelect(e) {
     const file = e.target.files[0]
@@ -196,48 +171,37 @@ export default function MealLog() {
 
     const carbsNum = carbs !== '' ? parseFloat(carbs) : null
 
-    if (photoFile) {
-      const fileName = `${userId}/${Date.now()}-${photoFile.name}`
-      await supabase.storage.from('food-photos').upload(fileName, photoFile)
-    }
-
-    const { data, error } = await supabase
-      .from('meals')
-      .insert({
-        user_id: userId,
-        meal_type: mealType,
-        name,
-        calories: calories !== '' ? parseInt(calories, 10) : null,
-        carbs_g: carbsNum,
-        protein_g: protein !== '' ? parseFloat(protein) : null,
-        fat_g: fat !== '' ? parseFloat(fat) : null,
+    // Photos are analyzed on the server, but not stored (no cloud storage).
+    const { list } = prependLog('meals', {
+      meal_type: mealType,
+      name,
+      calories: calories !== '' ? parseInt(calories, 10) : null,
+      carbs_g: carbsNum,
+      protein_g: protein !== '' ? parseFloat(protein) : null,
+      fat_g: fat !== '' ? parseFloat(fat) : null,
+      logged_at: new Date().toISOString(),
+    }, 30)
+    setMeals(list)
+    if (analysisResult) {
+      setLastResult({
+        etiqueta: analysisResult.suitable ? 'Buena opción' : 'Con precaución',
+        color: analysisResult.suitable ? '#1e6b3c' : '#b3261e',
+        fondo: analysisResult.suitable ? '#eaf5ee' : '#fbeceb',
+        mensaje: analysisResult.reasoning,
       })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setMeals([data, ...meals])
-      if (analysisResult) {
-        setLastResult({
-          etiqueta: analysisResult.suitable ? 'Buena opción' : 'Con precaución',
-          color: analysisResult.suitable ? '#1e6b3c' : '#b3261e',
-          fondo: analysisResult.suitable ? '#eaf5ee' : '#fbeceb',
-          mensaje: analysisResult.reasoning,
-        })
-      } else {
-        setLastResult(evaluarComida(carbsNum))
-      }
-      setName('')
-      setCalories('')
-      setCarbs('')
-      setProtein('')
-      setFat('')
-      setPhotoFile(null)
-      setPhotoPreview(null)
-      setAnalysisResult(null)
-      setTextEstimateReasoning('')
-      setToast('Comida guardada')
+    } else {
+      setLastResult(evaluarComida(carbsNum))
     }
+    setName('')
+    setCalories('')
+    setCarbs('')
+    setProtein('')
+    setFat('')
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setAnalysisResult(null)
+    setTextEstimateReasoning('')
+    setToast('Comida guardada')
     setSaving(false)
   }
 
@@ -253,9 +217,10 @@ export default function MealLog() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         <div className="card">
           <div className="section-label" style={{ marginBottom: '1rem' }}>Escanear alimento</div>

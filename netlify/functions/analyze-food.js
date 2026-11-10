@@ -1,5 +1,8 @@
+import { rateLimitAndSize } from './_shared/guard.mjs'
 export default async function handler(request) {
   try {
+    const limited = rateLimitAndSize(request, { maxPerMin: 10, maxBytes: 4500000 })
+    if (limited) return limited
     const body = await request.json()
     const { imageBase64, mediaType, diabetesType } = body
 
