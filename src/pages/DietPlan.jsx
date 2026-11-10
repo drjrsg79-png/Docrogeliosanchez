@@ -47,6 +47,19 @@ async function fetchDayOnceRetry(body) {
   }
 }
 
+async function fetchFullDay(basePayload, usedDishes) {
+  const morning = await fetchDayOnceRetry({ ...basePayload, segment: 'manana', usedDishes })
+  const morningMeals = normalizeDayMeals(morning.comidas)
+  const used = [...usedDishes, ...mainDishNames(morningMeals)]
+  const afternoon = await fetchDayOnceRetry({ ...basePayload, segment: 'tarde', usedDishes: used })
+  const afternoonMeals = normalizeDayMeals(afternoon.comidas)
+  const comidas = normalizeDayMeals([...morningMeals, ...afternoonMeals])
+  if (!hasMealSet(comidas)) {
+    throw new Error('El menú del día llegó incompleto')
+  }
+  return comidas
+}
+
 function persistProfile(profile, goal) {
   saveProfile({
     full_name: profile.full_name || '',
@@ -120,17 +133,14 @@ export default function DietPlan() {
 
       let comidas
       try {
-        const data = await fetchDayOnceRetry(payload)
-        comidas = normalizeDayMeals(data.comidas)
+        comidas = await fetchFullDay(payload, usedDishes)
         const names = mainDishNames(comidas).map(dishKey)
         const repeated = names.some((n) => n && usedDishes.map(dishKey).includes(n))
-        if (!hasMealSet(comidas) || repeated) {
-          const retryData = await fetchDay({
+        if (repeated) {
+          comidas = await fetchFullDay({
             ...payload,
             usedDishes: [...usedDishes, ...mainDishNames(comidas)],
-          })
-          const retryMeals = normalizeDayMeals(retryData.comidas)
-          if (hasMealSet(retryMeals)) comidas = retryMeals
+          }, usedDishes)
         }
       } catch (err) {
         setError(`Se armó hasta ${i} de 7 días. Faltó ${diaNombre}: ${err.message || 'error de conexión'}. Puedes intentar de nuevo; los días listos se quedan en este teléfono si pulsas otra vez después.`)
