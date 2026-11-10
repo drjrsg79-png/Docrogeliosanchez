@@ -158,10 +158,26 @@ Forma: {"c":[{"t":"desayuno","p":"nombre","po":"medidas y g","i":[["item","1 taz
       parsed = expand(extractJson(textContent))
     } catch (err) {
       console.log('parse_fail', err.message, textContent.slice(0, 240))
-      return json({ error: 'No se pudo interpretar el menú del día. Intenta de nuevo.' }, 500)
+      return json({
+        error: 'No se pudo interpretar el menú del día. Intenta de nuevo.',
+        debug: {
+          stop: data.stop_reason,
+          chars: textContent.length,
+          head: textContent.slice(0, 500),
+          tail: textContent.slice(-300),
+        },
+      }, 500)
     }
     if (!Array.isArray(parsed.comidas) || parsed.comidas.length < seg.count) {
-      return json({ error: 'El menú del día llegó incompleto. Intenta de nuevo.' }, 500)
+      return json({
+        error: 'El menú del día llegó incompleto. Intenta de nuevo.',
+        debug: {
+          stop: data.stop_reason,
+          chars: textContent.length,
+          meals: (parsed.comidas || []).length,
+          head: textContent.slice(0, 500),
+        },
+      }, 500)
     }
 
     return json(parsed)
