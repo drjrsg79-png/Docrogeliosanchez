@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { loadLogs, loadProfile, prependLog, LOCAL_NOTE } from '../lib/localStore'
 import FootCareWarning from '../components/FootCareWarning'
 import { estimateCaloriesBurned } from '../lib/calorieEstimate'
 
@@ -10,42 +10,16 @@ export default function ExerciseLog() {
   const [duration, setDuration] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [userId, setUserId] = useState(null)
   const [currentWeight, setCurrentWeight] = useState(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
+    const latest = loadLogs('weight_logs')[0]?.weight_kg || loadProfile().current_weight || null
+    setCurrentWeight(latest)
+    setLogs(loadLogs('exercise_logs').slice(0, 30))
+    setLoading(false)
+  }, [])
 
-      const { data: weightData } = await supabase
-        .from('weight_logs')
-        .select('weight_kg')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(1)
-        .single()
-      setCurrentWeight(weightData?.weight_kg || null)
-
-      const { data } = await supabase
-        .from('exercise_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(30)
-
-      setLogs(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
-
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
     if (!activity) return
     setSaving(true)
@@ -53,22 +27,15 @@ export default function ExerciseLog() {
     const durationNum = duration ? parseInt(duration, 10) : null
     const estimatedCalories = estimateCaloriesBurned(activity, durationNum, currentWeight)
 
-    const { data, error } = await supabase
-      .from('exercise_logs')
-      .insert({
-        user_id: userId,
-        activity,
-        duration_min: durationNum,
-        calories_burned: estimatedCalories,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setLogs([data, ...logs])
-      setActivity('')
-      setDuration('')
-    }
+    const { list } = prependLog('exercise_logs', {
+      activity,
+      duration_min: durationNum,
+      calories_burned: estimatedCalories,
+      logged_at: new Date().toISOString(),
+    }, 30)
+    setLogs(list)
+    setActivity('')
+    setDuration('')
     setSaving(false)
   }
 
@@ -82,9 +49,10 @@ export default function ExerciseLog() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         <FootCareWarning />
 

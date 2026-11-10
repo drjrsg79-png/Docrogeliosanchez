@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
-import { supabase } from '../lib/supabase'
+import { loadLogs, prependLog, LOCAL_NOTE } from '../lib/localStore'
 import Toast from '../components/Toast'
 
 const CONTEXT_OPTIONS = [
@@ -60,32 +60,13 @@ export default function GlucoseLog() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [lastResult, setLastResult] = useState(null)
-  const [userId, setUserId] = useState(null)
   const [toast, setToast] = useState('')
   const [saveError, setSaveError] = useState('')
-  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
-
-      const { data } = await supabase
-        .from('glucose_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('measured_at', { ascending: false })
-        .limit(30)
-
-      setReadings(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
+    setReadings(loadLogs('glucose_logs').slice(0, 30))
+    setLoading(false)
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -97,35 +78,15 @@ export default function GlucoseLog() {
     const numericValue = parseInt(value, 10)
     const evaluacion = evaluarLectura(numericValue, context)
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      setSaveError('Tu sesión expiró. Por favor cierra sesión y vuelve a iniciar sesión.')
-      setSaving(false)
-      return
-    }
-
-    const { data, error } = await supabase
-      .from('glucose_logs')
-      .insert({
-        user_id: user.id,
-        value_mg_dl: numericValue,
-        context,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      setSaveError(`No se pudo guardar: ${error.message}`)
-      setSaving(false)
-      return
-    }
-
-    if (data) {
-      setReadings([data, ...readings])
-      setLastResult(evaluacion)
-      setValue('')
-      setToast('Medición guardada')
-    }
+    const { row, list } = prependLog('glucose_logs', {
+      value_mg_dl: numericValue,
+      context,
+      measured_at: new Date().toISOString(),
+    }, 30)
+    setReadings(list)
+    setLastResult(evaluacion)
+    setValue('')
+    setToast('Medición guardada')
     setSaving(false)
   }
 
@@ -148,9 +109,10 @@ export default function GlucoseLog() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         <div className="card">
           <div className="section-label" style={{ marginBottom: '1rem' }}>Nueva medicion</div>

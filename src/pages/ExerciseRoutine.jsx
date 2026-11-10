@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
-import { supabase } from '../lib/supabase'
+import { loadProfile, loadStore, saveStore, LOCAL_NOTE } from '../lib/localStore'
 import FootCareWarning from '../components/FootCareWarning'
 import { newStyledPdf, checkPageBreak, addSectionBox, addDayHeader, addItemLine, addVideoLink, addFootersToAllPages } from '../lib/pdfStyle'
 
@@ -35,29 +35,13 @@ function youtubeSearchUrl(query) {
 }
 
 export default function ExerciseRoutine() {
-  const [profile, setProfile] = useState(null)
+  const [profile] = useState(() => loadProfile())
   const [conditionNotes, setConditionNotes] = useState('')
   const [goal, setGoal] = useState('')
-  const [routine, setRoutine] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [routine, setRoutine] = useState(() => loadStore('exercise-routine', null))
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(data)
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
 
   async function handleGenerate(e) {
     e.preventDefault()
@@ -101,6 +85,9 @@ export default function ExerciseRoutine() {
 
     setProgress('')
     setGenerating(false)
+    const complete = { ...summary, dias }
+    setRoutine(complete)
+    saveStore('exercise-routine', complete)
   }
 
   function handleDownloadPdf() {
@@ -137,8 +124,6 @@ export default function ExerciseRoutine() {
     window.open(url, '_blank')
   }
 
-  if (loading) return <div className="container">Cargando...</div>
-
   return (
     <div className="page">
       <div className="header">
@@ -147,8 +132,8 @@ export default function ExerciseRoutine() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
 
         <FootCareWarning />

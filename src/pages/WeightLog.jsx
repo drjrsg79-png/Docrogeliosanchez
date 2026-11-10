@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
-import { supabase } from '../lib/supabase'
+import { loadProfile, saveProfile, loadLogs, prependLog, LOCAL_NOTE } from '../lib/localStore'
 import Toast from '../components/Toast'
 
 function calcularIMC(pesoKg, alturaCm) {
@@ -55,85 +55,49 @@ export default function WeightLog() {
   const [saving, setSaving] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [lastResult, setLastResult] = useState(null)
-  const [userId, setUserId] = useState(null)
   const [toast, setToast] = useState('')
-  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
+    const profileData = loadProfile()
+    setProfile(profileData)
+    if (profileData?.height_cm) setHeightInput(String(profileData.height_cm))
+    if (profileData?.weight_goal_kg) setGoalInput(String(profileData.weight_goal_kg))
+    setLogs(loadLogs('weight_logs').slice(0, 30))
+    setLoading(false)
+  }, [])
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('height_cm, weight_goal_kg')
-        .eq('id', user.id)
-        .single()
-
-      setProfile(profileData)
-      if (profileData?.height_cm) setHeightInput(String(profileData.height_cm))
-      if (profileData?.weight_goal_kg) setGoalInput(String(profileData.weight_goal_kg))
-
-      const { data: logsData } = await supabase
-        .from('weight_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(30)
-
-      setLogs(logsData || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
-
-  async function handleSaveProfile(e) {
+  function handleSaveProfile(e) {
     e.preventDefault()
     setSavingProfile(true)
-
     const updates = {}
     if (heightInput) updates.height_cm = parseFloat(heightInput)
     if (goalInput) updates.weight_goal_kg = parseFloat(goalInput)
-
-    const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
-
-    if (!error) {
-      setProfile({ ...profile, ...updates })
-      setToast('Datos guardados')
-    }
+    const next = saveProfile(updates)
+    setProfile(next)
+    setToast('Datos guardados')
     setSavingProfile(false)
   }
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
     if (!weight) return
     setSaving(true)
     setLastResult(null)
 
     const numericWeight = parseFloat(weight)
-
-    const { data, error } = await supabase
-      .from('weight_logs')
-      .insert({
-        user_id: userId,
-        weight_kg: numericWeight,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setLogs([data, ...logs])
-      if (profile?.height_cm) {
-        const imc = calcularIMC(numericWeight, profile.height_cm)
-        setLastResult({ imc, ...evaluarIMC(imc) })
-      }
-      setWeight('')
-      setToast('Peso guardado')
+    const { list } = prependLog('weight_logs', {
+      weight_kg: numericWeight,
+      logged_at: new Date().toISOString(),
+    }, 30)
+    saveProfile({ current_weight: numericWeight })
+    setLogs(list)
+    const height = (profile && profile.height_cm) || (heightInput ? parseFloat(heightInput) : null)
+    if (height) {
+      const imc = calcularIMC(numericWeight, height)
+      setLastResult({ imc, ...evaluarIMC(imc) })
     }
+    setWeight('')
+    setToast('Peso guardado')
     setSaving(false)
   }
 
@@ -158,9 +122,10 @@ export default function WeightLog() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         {faltaEstatura && (
           <div className="card">

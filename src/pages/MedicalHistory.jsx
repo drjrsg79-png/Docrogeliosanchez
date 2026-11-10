@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { loadProfile, saveProfile, loadLogs, prependLog, LOCAL_NOTE } from '../lib/localStore'
 
 const COMPLICACIONES = [
   'Retinopatía',
@@ -31,7 +31,6 @@ function calcAge(birthDate) {
 }
 
 export default function MedicalHistory() {
-  const [userId, setUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -57,53 +56,35 @@ export default function MedicalHistory() {
   const [activityLevel, setActivityLevel] = useState('sedentario')
   const [suggestion, setSuggestion] = useState(null)
 
-  const navigate = useNavigate()
-
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-      setUserId(user.id)
-
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      if (data) {
-        setDiabetesType(data.diabetes_type || '')
-        setDiagnosisYear(data.diagnosis_year || '')
-        setLastHba1c(data.last_hba1c || '')
-        setLastHba1cDate(data.last_hba1c_date || '')
-        setCurrentMedications(data.current_medications || '')
-        setUsesInsulin(data.uses_insulin || false)
-        setInsulinType(data.insulin_type || '')
-        setComplications(data.complications || [])
-        setAllergies(data.allergies || '')
-        setFamilyHistory(data.family_history || '')
-        setSmoker(data.smoker || false)
-        setAlcohol(data.alcohol || false)
-        setDailyCalorieGoal(data.daily_calorie_goal || 2000)
-        setHeightCm(data.height_cm || '')
-        setBirthDate(data.birth_date || '')
-        setSex(data.sex || '')
-      }
-
-      const { data: weightData } = await supabase
-        .from('weight_logs')
-        .select('weight_kg')
-        .eq('user_id', user.id)
-        .order('logged_at', { ascending: false })
-        .limit(1)
-        .single()
-      if (weightData) {
-        setCurrentWeight(weightData.weight_kg)
-        setHasWeightLog(true)
-      }
-
-      setLoading(false)
+    const data = loadProfile()
+    if (data) {
+      setDiabetesType(data.diabetes_type || '')
+      setDiagnosisYear(data.diagnosis_year || '')
+      setLastHba1c(data.last_hba1c || '')
+      setLastHba1cDate(data.last_hba1c_date || '')
+      setCurrentMedications(data.current_medications || '')
+      setUsesInsulin(data.uses_insulin || false)
+      setInsulinType(data.insulin_type || '')
+      setComplications(data.complications || [])
+      setAllergies(data.allergies || '')
+      setFamilyHistory(data.family_history || '')
+      setSmoker(data.smoker || false)
+      setAlcohol(data.alcohol || false)
+      setDailyCalorieGoal(data.daily_calorie_goal || 2000)
+      setHeightCm(data.height_cm || '')
+      setBirthDate(data.birth_date || '')
+      setSex(data.sex || '')
     }
-    load()
-  }, [navigate])
+    const weightData = loadLogs('weight_logs')[0]
+    if (weightData?.weight_kg) {
+      setCurrentWeight(weightData.weight_kg)
+      setHasWeightLog(true)
+    } else if (data?.current_weight) {
+      setCurrentWeight(data.current_weight)
+    }
+    setLoading(false)
+  }, [])
 
   function toggleComplicacion(nombre) {
     setComplications((prev) =>
@@ -139,38 +120,37 @@ export default function MedicalHistory() {
     setSaving(true)
     setSaved(false)
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        diabetes_type: diabetesType,
-        diagnosis_year: noTieneDiabetes ? null : diagnosisYear ? parseInt(diagnosisYear, 10) : null,
-        last_hba1c: noTieneDiabetes ? null : lastHba1c ? parseFloat(lastHba1c) : null,
-        last_hba1c_date: noTieneDiabetes ? null : lastHba1cDate || null,
-        current_medications: currentMedications,
-        uses_insulin: noTieneDiabetes ? false : usesInsulin,
-        insulin_type: !noTieneDiabetes && usesInsulin ? insulinType : null,
-        complications,
-        allergies,
-        family_history: familyHistory,
-        smoker,
-        alcohol,
-        daily_calorie_goal: dailyCalorieGoal ? parseInt(dailyCalorieGoal, 10) : 2000,
-        height_cm: heightCm ? parseFloat(heightCm) : null,
-        birth_date: birthDate || null,
-        sex: sex || null,
-      })
-      .eq('id', userId)
+    const updates = {
+      diabetes_type: diabetesType,
+      diagnosis_year: noTieneDiabetes ? null : diagnosisYear ? parseInt(diagnosisYear, 10) : null,
+      last_hba1c: noTieneDiabetes ? null : lastHba1c ? parseFloat(lastHba1c) : null,
+      last_hba1c_date: noTieneDiabetes ? null : lastHba1cDate || null,
+      current_medications: currentMedications,
+      uses_insulin: noTieneDiabetes ? false : usesInsulin,
+      insulin_type: !noTieneDiabetes && usesInsulin ? insulinType : null,
+      complications,
+      allergies,
+      family_history: familyHistory,
+      smoker,
+      alcohol,
+      daily_calorie_goal: dailyCalorieGoal ? parseInt(dailyCalorieGoal, 10) : 2000,
+      height_cm: heightCm ? parseFloat(heightCm) : null,
+      birth_date: birthDate || null,
+      sex: sex || null,
+    }
+    if (currentWeight) updates.current_weight = parseFloat(currentWeight)
+    saveProfile(updates)
 
-    if (!error && currentWeight && !hasWeightLog) {
-      await supabase.from('weight_logs').insert({
-        user_id: userId,
+    if (currentWeight && !hasWeightLog) {
+      prependLog('weight_logs', {
         weight_kg: parseFloat(currentWeight),
-      })
+        logged_at: new Date().toISOString(),
+      }, 30)
       setHasWeightLog(true)
     }
 
     setSaving(false)
-    if (!error) setSaved(true)
+    setSaved(true)
   }
 
   if (loading) return <div className="container">Cargando...</div>
@@ -183,9 +163,10 @@ export default function MedicalHistory() {
       </div>
 
       <div className="container" style={{ flex: 1 }}>
-        <Link to="/dashboard" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
-          ← Volver al panel
+        <Link to="/" className="footer-link" style={{ display: 'block', marginBottom: '1rem', marginTop: 0 }}>
+          ← Volver al inicio
         </Link>
+        <p className="card-meta" style={{ marginBottom: '1rem' }}>{LOCAL_NOTE}</p>
 
         <form onSubmit={handleSave}>
           <div className="card">

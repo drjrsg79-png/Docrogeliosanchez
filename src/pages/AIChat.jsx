@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { loadProfile, loadLogs, saveStore, LOCAL_NOTE } from '../lib/localStore'
 
 function calcAge(birthDate) {
   if (!birthDate) return null
@@ -25,35 +25,15 @@ function renderContent(text) {
 export default function AIChat() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-  const [profile, setProfile] = useState(null)
-  const [latestWeight, setLatestWeight] = useState(null)
-  const navigate = useNavigate()
+  const [profile] = useState(() => loadProfile())
+  const [latestWeight] = useState(() => loadLogs('weight_logs')[0]?.weight_kg || loadProfile().current_weight || null)
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-
-      const [profileRes, weightRes, messagesRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('weight_logs').select('weight_kg').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(1),
-        supabase.from('ai_chat_messages').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-      ])
-
-      setProfile(profileRes.data || null)
-      setLatestWeight(weightRes.data?.[0]?.weight_kg || null)
-      setMessages(messagesRes.data || [])
-      setLoading(false)
-    }
-    load()
-  }, [navigate])
+    setMessages(loadLogs('ai_chat_messages'))
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -68,16 +48,10 @@ export default function AIChat() {
     setSending(true)
     setInput('')
 
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const { data: savedUserMsg } = await supabase
-      .from('ai_chat_messages')
-      .insert({ user_id: user.id, role: 'user', content: text })
-      .select()
-      .single()
-
-    const nextMessages = [...messages, savedUserMsg || { role: 'user', content: text }]
+    const savedUserMsg = { id: Date.now(), role: 'user', content: text, created_at: new Date().toISOString() }
+    const nextMessages = [...messages, savedUserMsg]
     setMessages(nextMessages)
+    saveStore('ai_chat_messages', nextMessages.slice(-40))
 
     try {
       const res = await fetch('/.netlify/functions/ai-chat', {
@@ -113,21 +87,16 @@ export default function AIChat() {
         return
       }
 
-      const { data: savedAiMsg } = await supabase
-        .from('ai_chat_messages')
-        .insert({ user_id: user.id, role: 'assistant', content: data.reply })
-        .select()
-        .single()
-
-      setMessages((prev) => [...prev, savedAiMsg || { role: 'assistant', content: data.reply }])
+      const savedAiMsg = { id: Date.now() + 1, role: 'assistant', content: data.reply, created_at: new Date().toISOString() }
+      const withReply = [...nextMessages, savedAiMsg]
+      setMessages(withReply)
+      saveStore('ai_chat_messages', withReply.slice(-40))
     } catch (err) {
       setError('Error de conexión. Intenta de nuevo.')
     } finally {
       setSending(false)
     }
   }
-
-  if (loading) return <div className="container">Cargando...</div>
 
   return (
     <div
@@ -140,8 +109,8 @@ export default function AIChat() {
       }}
     >
       <div className="header" style={{ flexShrink: 0 }}>
-        <Link to="/dashboard" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.875rem', opacity: 0.85 }}>
-          ‹ Volver
+        <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.875rem', opacity: 0.85 }}>
+          ‹ Inicio
         </Link>
         <div className="header-title" style={{ marginTop: '0.5rem' }}>Orientación</div>
       </div>
@@ -151,7 +120,7 @@ export default function AIChat() {
           <div className="card" style={{ textAlign: 'center' }}>
             <div className="card-meta">
               Pregunta dudas sobre diabetes, heridas, medicamentos o tus registros.
-              Esto orienta; el tratamiento lo decide el Dr. Rogelio.
+              Esto orienta; el tratamiento lo decide el Dr. Rogelio. {LOCAL_NOTE}
             </div>
           </div>
         )}

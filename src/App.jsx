@@ -1,11 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
+import RedirectHome from './pages/RedirectHome'
+import FollowUpCta from './pages/FollowUpCta'
 import Dashboard from './pages/Dashboard'
-import DoctorPanel from './pages/DoctorPanel'
-import PatientDetail from './pages/PatientDetail'
 import GlucoseLog from './pages/GlucoseLog'
 import WeightLog from './pages/WeightLog'
 import MealLog from './pages/MealLog'
@@ -25,13 +21,13 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/segunda-opinion" element={<SegundaOpinion />} />
       <Route path="/perfil" element={<Perfil />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/login" element={<RedirectHome />} />
+      <Route path="/register" element={<RedirectHome />} />
+      <Route path="/forgot-password" element={<RedirectHome />} />
+      <Route path="/reset-password" element={<RedirectHome />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/doctor" element={<DoctorPanel />} />
-      <Route path="/doctor/patient/:id" element={<PatientDetail />} />
+      <Route path="/doctor" element={<FollowUpCta />} />
+      <Route path="/doctor/patient/:id" element={<FollowUpCta />} />
       <Route path="/glucosa" element={<GlucoseLog />} />
       <Route path="/peso" element={<WeightLog />} />
       <Route path="/comidas" element={<MealLog />} />
