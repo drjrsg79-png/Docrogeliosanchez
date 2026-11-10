@@ -101,7 +101,8 @@
   margin-top: 0.7rem;
 }
 
-.perfil-phones a {
+.perfil-phones a,
+.perfil-phones span {
   display: block;
   text-align: center;
   text-decoration: none;
