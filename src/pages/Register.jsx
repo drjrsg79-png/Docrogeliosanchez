@@ -9,7 +9,7 @@ const BENEFICIOS = [
   { titulo: 'Glucosa', detalle: 'Registra tus mediciones y tenlas a la mano en tu siguiente consulta.' },
   { titulo: 'Historial médico', detalle: 'Antecedentes, medicamentos y alergias en un solo lugar.' },
   { titulo: 'Orientación', detalle: 'Resuelve dudas del día a día. No sustituye la consulta.' },
-  { titulo: 'La clínica', detalle: 'WhatsApp y sucursales para agendar en Querétaro, Polanco, Tlalnepantla o Tapachula.' },
+  { titulo: 'La clínica', detalle: 'WhatsApp y sucursales para agendar en Querétaro, Polanco o Tapachula.' },
   { titulo: 'Otros registros', detalle: 'Si te sirven, también puedes anotar peso, comidas o ejercicio.' },
 ]
 
