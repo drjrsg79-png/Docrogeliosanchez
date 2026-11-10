@@ -11,9 +11,44 @@ function extractJson(text) {
   let cleaned = String(text || '').replace(/```json|```/g, '').trim()
   cleaned = cleaned.replace(/[\u0000-\u001F]+/g, ' ')
   const first = cleaned.indexOf('{')
-  const last = cleaned.lastIndexOf('}')
-  if (first !== -1 && last !== -1) cleaned = cleaned.slice(first, last + 1)
-  return JSON.parse(cleaned)
+  if (first === -1) throw new Error('sin objeto')
+  cleaned = cleaned.slice(first)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    // Close a truncated object/array enough to parse a complete set of meals if possible.
+    let repaired = cleaned.replace(/,\s*$/, '')
+    const openSq = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length
+    const openCu = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length
+    repaired += ']'.repeat(Math.max(0, openSq)) + '}'.repeat(Math.max(0, openCu))
+    return JSON.parse(repaired)
+  }
+}
+
+function expand(parsed) {
+  const raw = parsed.comidas || parsed.c || []
+  const comidas = raw.map((c) => {
+    const ings = c.ingredientes || c.i || []
+    const ingredientes = ings.map((ing) => {
+      if (Array.isArray(ing)) {
+        return { item: ing[0], medida: ing[1], gramos: ing[2], seccion: ing[3] }
+      }
+      return ing
+    })
+    return {
+      tipo: c.tipo || c.t,
+      platillo: c.platillo || c.p,
+      porcion: c.porcion || c.po,
+      ingredientes,
+      calorias: c.calorias ?? c.k,
+      carbohidratos_g: c.carbohidratos_g ?? c.h,
+      proteina_g: c.proteina_g ?? c.pr,
+      grasas_g: c.grasas_g ?? c.g,
+      equivalentes: c.equivalentes || c.e || '',
+      tip: c.tip || c.s || '',
+    }
+  })
+  return { comidas }
 }
 
 export default async function handler(request) {
@@ -49,54 +84,27 @@ export default async function handler(request) {
 
     const condiciones = []
     if (tieneDiabetes) {
-      condiciones.push(`Diabetes: ${diabetesType}. Carga glucémica baja o moderada; reparte los hidratos de carbono en los 5 tiempos; no jugos ni harinas refinadas; preferir tortilla de maíz, avena y fruta entera.`)
+      condiciones.push(`Diabetes: ${diabetesType}. Carga glucémica baja o moderada; reparte los hidratos en los 5 tiempos; no jugos ni harinas refinadas; preferir tortilla de maíz, avena y fruta entera.`)
     }
-    if (hipertension) condiciones.push('Hipertensión: sin sal de mesa, sin embutidos ni caldos en cubo; sazonar con hierbas, ajo y limón.')
-    if (erc) condiciones.push('Enfermedad renal crónica: porciones moderadas de proteína; no abusar de plátano, naranja, jitomate, papa o caldos concentrados; sin sal añadida.')
-    if (allergies) condiciones.push(`Alergias o intolerancias (excluir por completo): ${allergies}.`)
+    if (hipertension) condiciones.push('Hipertensión: sin sal de mesa ni embutidos; hierbas, ajo y limón.')
+    if (erc) condiciones.push('Enfermedad renal crónica: proteína moderada; no abusar de plátano, naranja, jitomate o papa; sin sal añadida.')
+    if (allergies) condiciones.push(`Excluir por completo: ${allergies}.`)
     if (preferences) condiciones.push(`Preferencias: ${preferences}.`)
-    if (budget === 'accesible') condiciones.push('Presupuesto accesible: ingredientes de mercado o tianguis, de temporada, sin productos importados ni costosos.')
-    if (budget === 'moderado') condiciones.push('Presupuesto moderado: ingredientes accesibles en supermercado mexicano, sin lujos.')
+    if (budget === 'accesible') condiciones.push('Ingredientes de mercado o tianguis, de temporada, accesibles.')
+    if (budget === 'moderado') condiciones.push('Ingredientes de supermercado mexicano, sin lujos.')
 
-    const systemPrompt = `Eres un médico internista y nutriólogo clínico que elabora un menú de un solo día para el consultorio del Dr. José Rogelio Sánchez García, en México. No menciones inteligencia artificial ni que eres un modelo. Responde ÚNICAMENTE un JSON válido, compacto, sin markdown y sin texto alrededor.
+    const systemPrompt = `Eres un médico internista y nutriólogo clínico que elabora un menú de un solo día para el consultorio del Dr. José Rogelio Sánchez García, en México. No menciones inteligencia artificial ni que eres un modelo. Responde ÚNICAMENTE un JSON compacto, sin markdown.
 
-Genera SOLO el día "${day}". Tema de variedad: ${theme || 'comida casera mexicana variada'}.
-Objetivo del paciente: ${goal || 'alimentación saludable'}.
-Peso: ${currentWeight || 'no especificado'} kg. Estatura: ${heightCm || 'no especificado'} cm.
-Meta del día: ${kcal} kcal (±8 %), ${hc} g de hidratos, ${prot} g de proteína, ${fat} g de grasa.
+Día: "${day}". Tema: ${theme || 'comida casera mexicana variada'}.
+Objetivo: ${goal || 'alimentación saludable'}. Peso: ${currentWeight || 's/d'} kg. Estatura: ${heightCm || 's/d'} cm.
+Meta: ${kcal} kcal (±8 %), ${hc} g HC, ${prot} g prot, ${fat} g grasa.
 ${condiciones.join('\n')}
 ${yaUsados}
 
-Reglas:
-- Exactamente 5 tiempos, en este orden: desayuno, colacion_manana, comida, colacion_tarde, cena.
-- Platillos mexicanos, caseros, apetecibles, con ingredientes fáciles de conseguir.
-- Cada platillo debe ser distinto a los de días previos. No repitas el platillo principal (desayuno, comida, cena).
-- Porción en medida casera Y en gramos (ej. "1 taza (150 g) de nopal + 2 huevos + 1 tortilla de maíz (30 g)").
-- Máximo 6 ingredientes por comida. "seccion" debe ser una de: Frutas; Verduras y hortalizas; Proteínas; Lácteos; Cereales y tubérculos; Leguminosas; Grasas y oleaginosas; Abarrotes y otros.
-- "equivalentes": una sustitución práctica.
-- "tip": una frase breve de preparación (sin freír de más).
-- No pongas precios ni menciones marcas caras.
-- No inventes suplementos ni cambies medicamentos.
+Reglas: exactamente 5 tiempos en este orden: desayuno, colacion_manana, comida, colacion_tarde, cena. Platillos mexicanos caseros y distintos a los ya usados. Porción en medida casera Y gramos. Máximo 5 ingredientes por comida. "seccion" una de: Frutas; Verduras y hortalizas; Proteínas; Lácteos; Cereales y tubérculos; Leguminosas; Grasas y oleaginosas; Abarrotes y otros. No pongas precios ni marcas.
 
-Forma exacta:
-{
-  "comidas": [
-    {
-      "tipo": "desayuno",
-      "platillo": "nombre del platillo",
-      "porcion": "medidas caseras y gramos",
-      "ingredientes": [
-        { "item": "nombre", "medida": "1 taza", "gramos": 150, "seccion": "Verduras y hortalizas" }
-      ],
-      "calorias": 0,
-      "carbohidratos_g": 0,
-      "proteina_g": 0,
-      "grasas_g": 0,
-      "equivalentes": "sustitución breve",
-      "tip": "preparación breve"
-    }
-  ]
-}`
+Usa esta forma corta:
+{"c":[{"t":"desayuno","p":"nombre","po":"medidas y gramos","i":[["item","1 taza",150,"Verduras y hortalizas"]],"k":0,"h":0,"pr":0,"g":0,"e":"equivalencia breve","s":"preparación breve"}]}`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -107,9 +115,9 @@ Forma exacta:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 1800,
+        max_tokens: 2500,
         system: systemPrompt,
-        messages: [{ role: 'user', content: `JSON compacto del menú de ${day}, 5 tiempos, solo el objeto.` }],
+        messages: [{ role: 'user', content: `JSON compacto de ${day}, 5 tiempos, forma corta {"c":[...]}` }],
       }),
     })
 
@@ -121,7 +129,7 @@ Forma exacta:
     const textContent = data.content?.find((c) => c.type === 'text')?.text || ''
     let parsed
     try {
-      parsed = extractJson(textContent)
+      parsed = expand(extractJson(textContent))
     } catch {
       return json({ error: 'No se pudo interpretar el menú del día. Intenta de nuevo.' }, 500)
     }
