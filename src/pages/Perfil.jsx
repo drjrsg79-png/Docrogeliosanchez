@@ -6,10 +6,9 @@ const PROFILE_URL = 'https://docrogeliosanchez.com/perfil'
 const AGENDA_URL = 'https://miadmon.com/agendar'
 const SO_URL = 'https://segunda-opinion-internista-419.netlify.app/?origen=perfil'
 const SEP_URL = 'https://cedulaprofesional.sep.gob.mx/'
-const PHONES = [
-  { display: '55 6932 0331', tel: '+525569320331' },
-  { display: '55 7208 8675', tel: '+525572088675' },
-]
+const WHATSAPP_URL = 'https://wa.me/5215569320331'
+const WHATSAPP_DISPLAY = '55 6932 0331'
+const OTHER_PHONE_DISPLAY = '55 7208 8675'
 
 export default function Perfil() {
   useEffect(() => {
@@ -51,9 +50,8 @@ export default function Perfil() {
             <span>Videollamada para todo México</span>
           </a>
           <div className="perfil-phones">
-            {PHONES.map((phone) => (
-              <a key={phone.tel} href={`tel:${phone.tel}`}>{phone.display}</a>
-            ))}
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">{WHATSAPP_DISPLAY}</a>
+            <span>{OTHER_PHONE_DISPLAY}</span>
           </div>
           <p className="perfil-note">
             <Link to="/">Ir a la app de seguimiento</Link>
